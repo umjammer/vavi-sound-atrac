@@ -199,6 +199,7 @@ public class ChannelUnit {
 
         ret = decodeQuantWordlen();
         if (ret < 0) {
+log.finer("decodeQuantWordlen: " + ret);
             return ret;
         }
 
@@ -207,11 +208,13 @@ public class ChannelUnit {
 
         ret = decodeScaleFactors();
         if (ret < 0) {
+log.finer("decodeScaleFactors: " + ret);
             return ret;
         }
 
         ret = decodeCodeTableIndexes();
         if (ret < 0) {
+log.finer("decodeCodeTableIndexes: " + ret);
             return ret;
         }
 
@@ -226,11 +229,13 @@ public class ChannelUnit {
 
         ret = decodeGaincData();
         if (ret < 0) {
+log.finer("decodeGaincData: " + ret);
             return ret;
         }
 
         ret = decodeTonesInfo();
         if (ret < 0) {
+log.finer("decodeTonesInfo: " + ret);
             return ret;
         }
 

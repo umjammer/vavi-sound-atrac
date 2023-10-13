@@ -1,10 +1,4 @@
 /*
- * Copyright (c) 2023 by Naohide Sano, All rights reserved.
- *
- * Programmed by Naohide Sano
- */
-
-/*
  * This file is part of jpcsp.
  *
  * Jpcsp is free software: you can redistribute it and/or modify

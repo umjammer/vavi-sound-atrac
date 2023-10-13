@@ -530,12 +530,14 @@ public class Atrac3Decoder implements ICodec {
 
         ret = decodeGainControl(gain2, snd.bandsCoded);
         if (ret != 0) {
+log.finer("decodeGainControl: " + ret);
             return ret;
         }
 
         snd.numComponents = decodeTonalComponents(snd.components, snd.bandsCoded);
 
         if (snd.numComponents < 0) {
+log.finer("snd.numComponents: " + snd.numComponents);
             return snd.numComponents;
         }
 
@@ -578,6 +580,7 @@ public class Atrac3Decoder implements ICodec {
             // decode Sound Unit 1
             ret = decodeChannelSoundUnit(ctx.units[0], ctx.samples[0], 0, JOINT_STEREO);
             if (ret != 0) {
+log.finer("decodeChannelSoundUnit: " + ret);
                 return ret;
             }
 
@@ -608,6 +611,7 @@ public class Atrac3Decoder implements ICodec {
             br.seek(ctx.blockAlign);
 
             if (ret != 0) {
+log.finer("decodeChannelSoundUnit: " + ret);
                 return ret;
             }
 
@@ -624,6 +628,7 @@ public class Atrac3Decoder implements ICodec {
 
                 ret = decodeChannelSoundUnit(ctx.units[i], ctx.samples[i], i, ctx.codingMode);
                 if (ret != 0) {
+log.finer("decodeChannelSoundUnit: " + ret);
                     return ret;
                 }
             }

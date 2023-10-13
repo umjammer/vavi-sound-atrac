@@ -128,6 +128,7 @@ public class Atrac3plusDecoder implements ICodec {
 
 			ret = ctx.channelUnits[chBlock].decode();
 			if (ret < 0) {
+log.info("ctx.channelUnits[chBlock].decode(): " + ret);
 				return ret;
 			}
 
