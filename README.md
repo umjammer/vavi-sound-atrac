@@ -15,7 +15,7 @@ Pure Java ATRAC3plus decoder (Java Sound SPI) powered by [Jpcsp](https://github.
 
 ## References
 
- * https://github.com/korlibs-archive/korau-atrac3plus ... sample doesn't work~~, same result as mine~~
+ * https://github.com/korlibs-archive/korau-atrac3plus ... sample doesn't work, ~~same result as mine~~
  * https://github.com/Vincit/ffmpeg/blob/master/libavcodec/atrac3plus.c
 
 ## TODO
