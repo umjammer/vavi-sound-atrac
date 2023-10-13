@@ -5,8 +5,7 @@
 
 # vavi-sound-atrac3plus
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/MiniDisc-Logo.svg/248px-MiniDisc-Logo.svg.png" width="160" />
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Atrac.svg/160px-Atrac.svg.png" /><sub>© Sony Corporation</sub>
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/MiniDisc-Logo.svg/248px-MiniDisc-Logo.svg.png" width="160" /><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Atrac.svg/160px-Atrac.svg.png" /><sub>© Sony Corporation</sub>
 
 Pure Java ATRAC3plus decoder (Java Sound SPI) powered by [Jpcsp](https://github.com/jpcsp/jpcsp)
 
