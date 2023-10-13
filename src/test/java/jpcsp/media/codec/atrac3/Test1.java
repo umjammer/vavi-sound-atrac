@@ -21,6 +21,7 @@ import jpcsp.media.codec.ICodec;
 import jpcsp.media.codec.atrac3plus.Atrac3plusDecoder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import vavi.util.Debug;
 import vavi.util.StringUtil;
 import vavi.util.properties.annotation.Property;
@@ -62,6 +63,7 @@ class Test1 {
     }
 
     @Test
+    @EnabledIfSystemProperty(named = "vavi.test", matches = "ide")
     void test1() throws Exception {
 
         byte[] s = Files.newInputStream(Path.of(at3)).readAllBytes();
@@ -105,10 +107,9 @@ Debug.println("OUT: " + outAudioFormat);
 
         volume(line, volume);
 
-        ByteBuffer out = ByteBuffer.allocate(decoder.getNumberOfSamples() * Short.BYTES * ainfo.atracChannels).order(ByteOrder.LITTLE_ENDIAN);
         var ipos = ainfo.inputFileDataOffset;
         while (!later(time).come()) {
-            out.clear();
+            ByteBuffer out = ByteBuffer.allocate(decoder.getNumberOfSamples() * Short.BYTES * ainfo.atracChannels).order(ByteOrder.LITTLE_ENDIAN);
             var res = decoder.decode(mem, ipos, ainfo.atracBytesPerFrame, out, 0);
 Debug.println(Level.FINER, res + ", " + out);
             if (res < 0) {
