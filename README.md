@@ -5,15 +5,20 @@
 
 # vavi-sound-atrac3plus
 
-![Logo of the Sony ATRAC](https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Atrac.svg/320px-Atrac.svg.png)<sub><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/PD-icon.svg/128px-PD-icon.svg.png" width="10"/> PD</sub>
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/MiniDisc-Logo.svg/248px-MiniDisc-Logo.svg.png" width="160" />
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Atrac.svg/160px-Atrac.svg.png" /><sub>© Sony Corporation</sub>
 
 Pure Java ATRAC3plus decoder (Java Sound SPI) powered by [Jpcsp](https://github.com/jpcsp/jpcsp)
-
-
 
 ## install
 
  * [maven](https://jitpack.io/#umjammer/vavi-sound-atrac3plus)
 
+## References
 
+ * https://github.com/korlibs-archive/korau-atrac3plus ... sample doesn't work~~, same result as mine~~
+ * https://github.com/Vincit/ffmpeg/blob/master/libavcodec/atrac3plus.c
 
+## TODO
+
+ * ~~spi~~
