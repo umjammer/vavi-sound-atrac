@@ -92,7 +92,7 @@ Debug.println(Level.FINE, "enter available: " + bitStream.available());
             AudioFormat.Encoding encoding = switch (codec) {
                 case Atrac3Encoding.AT3_MAGIC -> ATRAC3;
                 case Atrac3Encoding.AT3_PLUS_MAGIC -> ATRAC3PLUS;
-                default ->throw new UnsupportedAudioFileException("codec: " + codec);
+                default -> throw new UnsupportedAudioFileException("codec: " + codec);
             };
             format = new AudioFormat(encoding,
                     sampleRate,
