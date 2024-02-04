@@ -24,31 +24,32 @@
 
 package libatrac9;
 
+
 /**
  * An Xorshift RNG used by the ATRAC9 codec
  */
 class Atrac9Rng {
 
-    private short _stateA;
-    private short _stateB;
-    private short _stateC;
-    private short _stateD;
+    private short stateA;
+    private short stateB;
+    private short stateC;
+    private short stateD;
 
     public Atrac9Rng(short seed) {
-        int startValue = 0x4D93 * (seed ^ (seed >> 14));
+        int startValue = 0x4D93 * (seed ^ (seed >>> 14));
 
-        _stateA = (short) (3 - startValue);
-        _stateB = (short) (2 - startValue);
-        _stateC = (short) (1 - startValue);
-        _stateD = (short) (0 - startValue);
+        stateA = (short) (3 - startValue);
+        stateB = (short) (2 - startValue);
+        stateC = (short) (1 - startValue);
+        stateD = (short) (0 - startValue);
     }
 
     public short Next() {
-        short t = (short) (_stateD ^ (_stateD << 5));
-        _stateD = _stateC;
-        _stateC = _stateB;
-        _stateB = _stateA;
-        _stateA = (short) (t ^ _stateA ^ ((t ^ (_stateA >> 5)) >> 4));
-        return _stateA;
+        short t = (short) (stateD ^ (stateD << 5));
+        stateD = stateC;
+        stateC = stateB;
+        stateB = stateA;
+        stateA = (short) (t ^ stateA ^ ((t ^ (stateA >>> 5)) >> 4));
+        return stateA;
     }
 }

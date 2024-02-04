@@ -8,9 +8,11 @@ package libatrac9;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.logging.Level;
 
 import dotnet4j.io.BinaryReader;
 import dotnet4j.io.Stream;
+import vavi.util.Debug;
 
 
 /**
@@ -28,23 +30,25 @@ public class Utils {
         return (value + divisor - 1) / divisor;
     }
 
-    public static int Clamp(int value, int min, int max) {
+    public static int clamp(int value, int min, int max) {
         return value < min ? min : Math.min(value, max);
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T CreateJaggedArray(Class<T> c, int... lengths) {
-        return (T) InitializeJaggedArray(c.arrayType(), 0, lengths);
+    public static <T> T createJaggedArray(Class<T> c, int... lengths) {
+        return (T) initializeJaggedArray(c.getComponentType(), 0, lengths);
     }
 
-    private static Object InitializeJaggedArray(Class<?> type, int index, int... lengths) {
+    private static Object initializeJaggedArray(Class<?> type, int index, int... lengths) {
+Debug.println(Level.FINER, "array: " + type + ", length: " + lengths[index]);
         Object array = Array.newInstance(type, lengths[index]);
 
-        Class<?> elementType = type.arrayType();
-        if (elementType == null) return array;
+        if (!type.isArray()) return array;
+        Class<?> elementType = type.getComponentType();
 
         for (int i = 0; i < lengths[index]; i++) {
-            Array.set(array, i, InitializeJaggedArray(elementType, index + 1, lengths));
+Debug.println(Level.FINER, " sub array: index[" + i  + "]: length: " + lengths[index + 1]);
+            Array.set(array, i, initializeJaggedArray(elementType, index + 1, lengths));
         }
 
         return array;
@@ -55,7 +59,7 @@ public class Utils {
         return new String(array);
     }
 
-    public static short[][] InterleavedByteToShort(byte[] input, int outputCount) {
+    public static short[][] interleavedByteToShort(byte[] input, int outputCount) {
         int itemCount = input.length / 2 / outputCount;
         var output = new short[outputCount][];
         for (int i = 0; i < outputCount; i++) {
@@ -72,7 +76,7 @@ public class Utils {
         return output;
     }
 
-    public static byte[] ShortToInterleavedByte(short[][] input) {
+    public static byte[] shortToInterleavedByte(short[][] input) {
         int inputCount = input.length;
         int length = input[0].length;
         var output = new byte[inputCount * length * 2];
@@ -88,7 +92,7 @@ public class Utils {
         return output;
     }
 
-    public static byte[][] DeInterleave(byte[] input, int interleaveSize, int outputCount, int outputSize /* = -1 */) {
+    public static byte[][] deInterleave(byte[] input, int interleaveSize, int outputCount, int outputSize /* = -1 */) {
         if (input.length % outputCount != 0)
             throw new IndexOutOfBoundsException(
                     "The input array length " + input.length + " must be divisible by the number of outputs.");
@@ -119,7 +123,7 @@ public class Utils {
         return outputs;
     }
 
-    public static void Interleave(byte[][] inputs, Stream output, int interleaveSize, int outputSize /* = -1 */) {
+    public static void interleave(byte[][] inputs, Stream output, int interleaveSize, int outputSize /* = -1 */) {
         int inputSize = inputs[0].length;
         if (outputSize == -1)
             outputSize = inputSize;
@@ -152,7 +156,7 @@ public class Utils {
         output.setLength(Math.max(outputSize * inputCount, (int) output.getLength()));
     }
 
-    public static byte[][] DeInterleave(Stream input, int length, int interleaveSize, int outputCount, int outputSize /* = -1 */) {
+    public static byte[][] deInterleave(Stream input, int length, int interleaveSize, int outputCount, int outputSize /* = -1 */) {
         if (input.canSeek()) {
             long remainingLength = input.getLength() - input.position();
             if (remainingLength < length) {
@@ -196,14 +200,14 @@ public class Utils {
         return outputs;
     }
 
-    public static <T> T[] Concat(Class<T> c, T[] first, T[] second) {
+    public static <T> T[] concat(Class<T> c, T[] first, T[] second) {
         if (first == null) throw new NullPointerException("first");
         if (second == null) throw new NullPointerException("second");
-        return ConcatIterator(c, first, second);
+        return concatArray(c, first, second);
     }
 
     @SuppressWarnings("unchecked")
-    static <T> T[] ConcatIterator(Class<T> c, T[] first, T[] second) {
+    static <T> T[] concatArray(Class<T> c, T[] first, T[] second) {
         T[] result = (T[]) Array.newInstance(c, first.length + second.length);
         int i = 0;
         for (T element : first) result[i++] = element;

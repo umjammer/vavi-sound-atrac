@@ -5,6 +5,8 @@
 package libatrac9;
 
 import java.io.IOException;
+import java.util.StringJoiner;
+import java.util.logging.Level;
 
 import dotnet4j.io.FileAccess;
 import dotnet4j.io.FileMode;
@@ -17,6 +19,7 @@ import libatrac9.Atract9FormatBuilder.AudioData;
 import libatrac9.Atract9FormatBuilder.AudioInfo;
 import libatrac9.Atract9FormatBuilder.FileType;
 import libatrac9.Atract9FormatBuilder.IAudioFormat;
+import vavi.util.Debug;
 
 
 /**
@@ -42,6 +45,21 @@ public class Atrac9 {
         public boolean looping;
         public int loopStart;
         public int loopEnd;
+
+        @Override
+        public String toString() {
+            return new StringJoiner(", ", At9Structure.class.getSimpleName() + "[", "]")
+                    .add("config=" + config)
+                    .add("audioData=" + audioData.length + " x " + audioData[0].length)
+                    .add("sampleCount=" + sampleCount)
+                    .add("version=" + version)
+                    .add("encoderDelay=" + encoderDelay)
+                    .add("superframeCount=" + superframeCount)
+                    .add("looping=" + looping)
+                    .add("loopStart=" + loopStart)
+                    .add("loopEnd=" + loopEnd)
+                    .toString();
+        }
     }
 
     /**
@@ -49,6 +67,7 @@ public class Atrac9 {
      * @param at9file Location of at9 file
      * @return Byte Array of Wav file
      */
+    @SuppressWarnings("unchecked")
     public static byte[] loadAt9(String at9file) throws IOException {
         // Byte array holder for return vars
         byte[] array;
@@ -56,18 +75,20 @@ public class Atrac9 {
         try (Stream stream = new FileStream(at9file, FileMode.Open, FileAccess.Read)) {
             At9Reader reader = new At9Reader();
             At9Structure structure = reader.readFile(stream, true);
+Debug.println(Level.FINER, "structure: " + structure);
             IAudioFormat format = new Atrac9FormatBuilder(structure.audioData, structure.config, structure.sampleCount, structure.encoderDelay)
                     .withLoop(structure.looping, structure.loopStart, structure.loopEnd)
                     .build();
+Debug.println(Level.FINER, "format: " + format);
             //now we have the atrac9 format now we need to play it somehow
-            AudioData AudioData = new AudioData(format);
-            MemoryStream SongStream = new MemoryStream();
-            AudioInfo.containers.get(FileType.Wave).getWriter.get().writeToStream(AudioData, SongStream, null, null);
+            AudioData audioData = new AudioData(format);
+            MemoryStream songStream = new MemoryStream();
+            AudioInfo.containers.get(FileType.Wave).getWriter.get().writeToStream(audioData, songStream, null);
 
             // Uncomment this if you need to test but this definitely works
-            //System.out.println(at9file + ".wav", SongStream.ToArray());
+            //System.out.println(at9file + ".wav", songStream.toArray());
 
-            array = SongStream.toArray();
+            array = songStream.toArray();
         }
 
         return array;

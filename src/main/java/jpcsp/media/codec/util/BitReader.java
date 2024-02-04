@@ -63,7 +63,7 @@ public class BitReader implements IBitReader {
 			addr = nextAddr();
 			bits = 8;
 		}
-		int bit = value >> 7;
+		int bit = value >>> 7;
 		bits--;
 		value = (value << 1) & 0xFF;
 
@@ -74,7 +74,7 @@ public class BitReader implements IBitReader {
 	public int read(int n) {
 		int read;
 		if (n <= bits) {
-			read = value >> (8 - n);
+			read = value >>> (8 - n);
 			bits -= n;
 			value = (value << n) & 0xFF;
 		} else {

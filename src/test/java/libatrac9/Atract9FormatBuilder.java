@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import dotnet4j.io.BinaryWriter;
@@ -23,6 +24,7 @@ import dotnet4j.io.MemoryStream;
 import dotnet4j.io.Stream;
 import libatrac9.Atrac9.At9Structure;
 import vavi.util.ByteUtil;
+import vavi.util.Debug;
 
 import static libatrac9.Atrac9Reader.At9DataChunk;
 import static libatrac9.Atrac9Reader.At9FactChunk;
@@ -33,14 +35,13 @@ import static libatrac9.Atrac9Reader.WaveDataChunk;
 import static libatrac9.Atrac9Reader.WaveFmtChunk;
 import static libatrac9.Atrac9Reader.WaveFormatTags;
 import static libatrac9.Atrac9Reader.WaveSmplChunk;
-import static libatrac9.Utils.Clamp;
-import static libatrac9.Utils.Concat;
-import static libatrac9.Utils.CreateJaggedArray;
-import static libatrac9.Utils.DeInterleave;
-import static libatrac9.Utils.Interleave;
-import static libatrac9.Utils.InterleavedByteToShort;
-import static libatrac9.Utils.ShortToInterleavedByte;
+import static libatrac9.Utils.clamp;
+import static libatrac9.Utils.concat;
+import static libatrac9.Utils.createJaggedArray;
 import static libatrac9.Utils.divideByRoundUp;
+import static libatrac9.Utils.interleave;
+import static libatrac9.Utils.interleavedByteToShort;
+import static libatrac9.Utils.shortToInterleavedByte;
 
 
 /**
@@ -51,13 +52,13 @@ import static libatrac9.Utils.divideByRoundUp;
  */
 public class Atract9FormatBuilder {
 
+    /** */
     public static class At9Configuration extends Configuration {
 
     }
 
-    public abstract static class AudioReader<TReader extends AudioReader<TReader, TStructure, TConfig>, TStructure, TConfig extends Configuration> implements IAudioReader {
-
-        Class<TConfig> c;
+    /** */
+    public abstract static class AudioReader<TReader extends AudioReader<TReader, TStructure, TConfig>, TStructure, TConfig extends Configuration> implements IAudioReader<TConfig> {
 
         @Override
         public IAudioFormat readFormat(Stream stream) throws IOException {
@@ -93,9 +94,9 @@ public class Atract9FormatBuilder {
             return readStructure(stream, false);
         }
 
-        protected TConfig GetConfiguration(TStructure structure) {
+        protected TConfig getConfiguration(TStructure structure) {
             try {
-                return c.getDeclaredConstructor().newInstance();
+                return getConfigurationClass().getDeclaredConstructor().newInstance();
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
                      NoSuchMethodException e) {
                 throw new IllegalStateException(e);
@@ -114,7 +115,7 @@ public class Atract9FormatBuilder {
 
         private AudioWithConfig readStream(Stream stream) throws IOException {
             TStructure structure = readStructure(stream, true);
-            return new AudioWithConfig(toAudioStream(structure), GetConfiguration(structure));
+            return new AudioWithConfig(toAudioStream(structure), getConfiguration(structure));
         }
 
         private TStructure readStructure(Stream stream, boolean readAudioData /* = true */) throws IOException {
@@ -126,10 +127,12 @@ public class Atract9FormatBuilder {
         }
     }
 
+    /** */
     public static class At9Reader extends AudioReader<At9Reader, At9Structure, At9Configuration> {
 
-        {
-            c = At9Configuration.class;
+        @Override
+        public Class<At9Configuration> getConfigurationClass() {
+            return At9Configuration.class;
         }
 
         private static void validateAt9File(RiffParser parser) {
@@ -148,7 +151,7 @@ public class Atract9FormatBuilder {
 
             if (fmt.channelCount == 0) throw new IllegalArgumentException("Channel count must not be zero");
 
-            if (ext.subFormat != MediaSubtypes.MediaSubtypeAtrac9)
+            if (!ext.subFormat.equals(MediaSubtypes.MediaSubtypeAtrac9))
                 throw new IllegalArgumentException("Must contain ATRAC9 data. Has unsupported subFormat " + ext.subFormat);
         }
 
@@ -194,6 +197,7 @@ public class Atract9FormatBuilder {
         }
     }
 
+    /** */
     public static class WaveStructure {
 
         public Collection<Atrac9Reader.RiffSubChunk> riffSubChunks;
@@ -237,12 +241,19 @@ public class Atract9FormatBuilder {
         Pcm8Bit
     }
 
+    /** */
     public static class WaveConfiguration extends Configuration {
 
-        public WaveCodec codec;
+        public WaveCodec codec = WaveCodec.Pcm16Bit;
     }
 
+    /** */
     public static class WaveReader extends AudioReader<WaveReader, WaveStructure, WaveConfiguration> {
+
+        @Override
+        public Class<WaveConfiguration> getConfigurationClass() {
+            return WaveConfiguration.class;
+        }
 
         @Override
         public WaveStructure readFile(Stream stream, boolean readAudioData /* = true */) throws IOException {
@@ -273,10 +284,10 @@ public class Atract9FormatBuilder {
 
             switch (fmt.bitsPerSample) {
             case 16:
-                structure.audioData16 = InterleavedByteToShort(data.data, fmt.channelCount);
+                structure.audioData16 = interleavedByteToShort(data.data, fmt.channelCount);
                 break;
             case 8:
-                structure.audioData8 = DeInterleave(data.data, bytesPerSample, fmt.channelCount, -1);
+                structure.audioData8 = Utils.deInterleave(data.data, bytesPerSample, fmt.channelCount, -1);
                 break;
             }
             return structure;
@@ -284,18 +295,15 @@ public class Atract9FormatBuilder {
 
         @Override
         protected IAudioFormat toAudioStream(WaveStructure structure) {
-            switch (structure.bitsPerSample) {
-            case 16:
-                return new Pcm16FormatBuilder(structure.audioData16, structure.sampleRate)
+            return switch (structure.bitsPerSample) {
+                case 16 -> new Pcm16FormatBuilder(structure.audioData16, structure.sampleRate)
                         .withLoop(structure.looping, structure.loopStart, structure.loopEnd)
                         .build();
-            case 8:
-                return new Pcm8FormatBuilder(structure.audioData8, structure.sampleRate, false)
+                case 8 -> new Pcm8FormatBuilder(structure.audioData8, structure.sampleRate, false)
                         .withLoop(structure.looping, structure.loopStart, structure.loopEnd)
                         .build();
-            default:
-                return null;
-            }
+                default -> null;
+            };
         }
 
         private static void validateWaveFile(RiffParser parser) {
@@ -326,7 +334,13 @@ public class Atract9FormatBuilder {
         }
     }
 
+    /** */
     public static class WaveWriter extends AudioWriter<WaveWriter, WaveConfiguration> {
+
+        @Override
+        public Class<WaveConfiguration> getConfigurationClass() {
+            return WaveConfiguration.class;
+        }
 
         private Pcm16Format pcm16;
         private Pcm8Format pcm8;
@@ -424,18 +438,20 @@ public class Atract9FormatBuilder {
                 writeDataChunk(writer);
                 if (isLooping())
                     writeSmplChunk(writer);
+Debug.println(Level.FINER, "stream: " + stream.getLength());
             }
         }
 
         private void writeRiffHeader(BinaryWriter writer) {
-            writer.write("RIFF".getBytes());//write URF8
+            writer.write("RIFF".getBytes()); // write URF8
             writer.write(getRiffChunkSize());
             writer.write("WAVE".getBytes());
         }
 
         private void writeFmtChunk(BinaryWriter writer) {
             // Every chunk should be 2-byte aligned
-            writer.getBaseStream().position(writer.getBaseStream().position() + writer.getBaseStream().position() & 1);
+            writer.getBaseStream().position(writer.getBaseStream().position() + (writer.getBaseStream().position() & 1));
+
             writer.write("fmt ".getBytes());
             writer.write(getFmtChunkSize());
             writer.write((short) (getChannelCount() > 2 ? WaveFormatTags.WaveFormatExtensible : WaveFormatTags.WaveFormatPcm));
@@ -448,7 +464,7 @@ public class Atract9FormatBuilder {
             if (getChannelCount() > 2) {
                 writer.write((short) 22);
                 writer.write((short) getBitDepth());
-                writer.write(GetChannelMask(getChannelCount()));
+                writer.write(getChannelMask(getChannelCount()));
                 byte[] b = new byte[8];
                 ByteUtil.writeLeUUID(MediaSubtypes.MediaSubtypePcm, b, 0);
                 writer.write(b);
@@ -456,24 +472,25 @@ public class Atract9FormatBuilder {
         }
 
         private void writeDataChunk(BinaryWriter writer) {
-            writer.getBaseStream().position(writer.getBaseStream().position() + writer.getBaseStream().position() & 1);
+            writer.getBaseStream().position(writer.getBaseStream().position() + (writer.getBaseStream().position() & 1));
 
             writer.write("data".getBytes());
             writer.write(getDataChunkSize());
 
             switch (getCodec()) {
             case Pcm16Bit:
-                byte[] audioData = ShortToInterleavedByte(pcm16.channels);
+                byte[] audioData = shortToInterleavedByte(pcm16.channels);
                 writer.write(audioData, 0, audioData.length);
                 break;
             case Pcm8Bit:
-                Interleave(pcm8.channels, writer.getBaseStream(), getBytesPerSample(), -1);
+                interleave(pcm8.channels, writer.getBaseStream(), getBytesPerSample(), -1);
                 break;
             }
         }
 
         private void writeSmplChunk(BinaryWriter writer) {
-            writer.getBaseStream().position(writer.getBaseStream().position() + writer.getBaseStream().position() & 1);
+            writer.getBaseStream().position(writer.getBaseStream().position() + (writer.getBaseStream().position() & 1));
+
             writer.write("smpl".getBytes());
             writer.write(getSmplChunkSize());
             for (int i = 0; i < 7; i++)
@@ -487,7 +504,7 @@ public class Atract9FormatBuilder {
             writer.write(0);
         }
 
-        private static int GetChannelMask(int channelCount) {
+        private static int getChannelMask(int channelCount) {
             // Nothing special about these masks. I just choose
             // whatever channel combinations seemed okay.
             switch (channelCount) {
@@ -507,6 +524,7 @@ public class Atract9FormatBuilder {
         }
     }
 
+    /** */
     static class AudioInfo {
 
         public static final Map<FileType, ContainerType> containers = new HashMap<>();
@@ -528,6 +546,7 @@ public class Atract9FormatBuilder {
         }
     }
 
+    /** */
     public static class Pcm8Codec {
 
         public static byte[] encode(short[] array) {
@@ -571,6 +590,7 @@ public class Atract9FormatBuilder {
         }
     }
 
+    /** */
     public static class Pcm8Format extends AudioFormatBase<Pcm8Format, Pcm8FormatBuilder, CodecParameters> {
 
         public byte[][] channels;
@@ -623,7 +643,7 @@ public class Atract9FormatBuilder {
         @Override
         protected Pcm8Format addInternal(Pcm8Format pcm8) {
             Pcm8FormatBuilder copy = getCloneBuilder();
-            copy.channels = Concat(byte[].class, channels, pcm8.channels);
+            copy.channels = concat(byte[].class, channels, pcm8.channels);
             return copy.build();
         }
 
@@ -652,6 +672,7 @@ public class Atract9FormatBuilder {
         }
     }
 
+    /** */
     public static class Pcm8SignedFormat extends Pcm8Format {
 
         @Override
@@ -671,6 +692,7 @@ public class Atract9FormatBuilder {
         }
     }
 
+    /** */
     public static class Pcm8FormatBuilder extends AudioFormatBaseBuilder<Pcm8Format, Pcm8FormatBuilder, CodecParameters> {
 
         public byte[][] channels;
@@ -705,6 +727,7 @@ public class Atract9FormatBuilder {
         }
     }
 
+    /** */
     public enum FileType {
         Unknown,
         Wave,
@@ -720,6 +743,7 @@ public class Atract9FormatBuilder {
         Atrac9
     }
 
+    /** */
     public static class ContainerType {
 
         public String displayName;
@@ -737,7 +761,10 @@ public class Atract9FormatBuilder {
         }
     }
 
-    public interface IAudioReader {
+    /** */
+    public interface IAudioReader<TConfig extends Configuration> {
+
+        Class<TConfig> getConfigurationClass();
 
         IAudioFormat readFormat(Stream stream) throws IOException;
 
@@ -752,41 +779,45 @@ public class Atract9FormatBuilder {
         AudioWithConfig readWithConfig(byte[] file) throws IOException;
     }
 
+    /** */
     public interface IAudioWriter<TConfig extends Configuration> {
 
-        void writeToStream(IAudioFormat audio, Stream stream, Class<TConfig> c, TConfig configuration /*= null*/) throws IOException;
+        Class<TConfig> getConfigurationClass();
 
-        byte[] getFile(IAudioFormat audio, Class<TConfig> c, TConfig configuration /*= null*/) throws IOException;
+        void writeToStream(IAudioFormat audio, Stream stream, TConfig configuration /*= null*/) throws IOException;
 
-        void writeToStream(AudioData audio, Stream stream, Class<TConfig> c, TConfig configuration /*= null*/) throws IOException;
+        byte[] getFile(IAudioFormat audio, TConfig configuration /*= null*/) throws IOException;
+
+        void writeToStream(AudioData audio, Stream stream, TConfig configuration /*= null*/) throws IOException;
     }
 
+    /** */
     public static abstract class AudioWriter<TWriter extends AudioWriter<TWriter, TConfig>, TConfig extends Configuration> implements IAudioWriter<TConfig> {
 
         @Override
-        public byte[] getFile(IAudioFormat audio, Class<TConfig> c, TConfig configuration /* = null */) throws IOException {
-            return getByteArray(new AudioData(audio), c, configuration);
+        public byte[] getFile(IAudioFormat audio, TConfig configuration /* = null */) throws IOException {
+            return getByteArray(new AudioData(audio), configuration);
         }
 
         @Override
-        public void writeToStream(IAudioFormat audio, Stream stream, Class<TConfig> c, TConfig configuration/* = null*/) throws IOException {
-            writeStream(new AudioData(audio), stream, c, configuration);
+        public void writeToStream(IAudioFormat audio, Stream stream, TConfig configuration /* = null */) throws IOException {
+            writeStream(new AudioData(audio), stream, configuration);
         }
 
-        public byte[] getFile(AudioData audio, Class<TConfig> c, TConfig configuration/* = null*/) throws IOException {
-            return getByteArray(audio, c, configuration);
+        public byte[] getFile(AudioData audio, TConfig configuration /* = null */) throws IOException {
+            return getByteArray(audio, configuration);
         }
 
         @Override
-        public void writeToStream(AudioData audio, Stream stream, Class<TConfig> c, TConfig configuration /*= null*/) throws IOException {
-            writeStream(audio, stream, c, configuration);
+        public void writeToStream(AudioData audio, Stream stream, TConfig configuration /* = null */) throws IOException {
+            writeStream(audio, stream, configuration);
         }
 
         protected AudioData audioData;
         public TConfig configuration;
-        public TConfig getConfiguration(Class<TConfig> c) {
+        public TConfig getConfiguration() {
             try {
-                return c.getDeclaredConstructor().newInstance();
+                return getConfigurationClass().getDeclaredConstructor().newInstance();
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                 throw new IllegalStateException(e);
             }
@@ -797,8 +828,8 @@ public class Atract9FormatBuilder {
 
         protected abstract void writeStream(Stream stream) throws IOException;
 
-        private byte[] getByteArray(AudioData audio, Class<TConfig> c, TConfig configuration /*= null*/) throws IOException {
-            this.configuration = Objects.requireNonNullElse(configuration, getConfiguration(c));
+        private byte[] getByteArray(AudioData audio, TConfig configuration /*= null*/) throws IOException {
+            this.configuration = Objects.requireNonNullElse(configuration, getConfiguration());
             setupWriter(audio);
 
             MemoryStream stream;
@@ -816,21 +847,24 @@ public class Atract9FormatBuilder {
             return getFileSize() == -1 ? stream.toArray() : file;
         }
 
-        private void writeStream(AudioData audio, Stream stream, Class<TConfig> c, TConfig configuration /*= null*/) throws IOException {
-            this.configuration = Objects.requireNonNullElse(configuration, (TConfig) new Configuration());
+        private void writeStream(AudioData audio, Stream stream, TConfig configuration /* = null */) throws IOException {
+            this.configuration = Objects.requireNonNullElse(configuration, getConfiguration());
             setupWriter(audio);
-//            if (stream.getLength() != FileSize() && FileSize() != -1) {
-//                try {
-//                    stream.truncate(FileSize());
-//                } catch (IllegalArgumentException ex) {
-//                    throw new IllegalArgumentException("Stream is too small.", ex);
-//                }
-//            }
+//Debug.println("stream: " + stream.getLength());
+//Debug.println("fileSize: " + getFileSize());
+            if (stream.getLength() != getFileSize() && getFileSize() != -1) {
+                try {
+                    stream.setLength(getFileSize());
+                } catch (IllegalArgumentException ex) {
+                    throw new IllegalArgumentException("Stream is too small.", ex);
+                }
+            }
 
             writeStream(stream);
         }
     }
 
+    /** */
     public static class AudioData {
 
         private final Map<Class<?>, IAudioFormat> formats = new HashMap<>();
@@ -847,11 +881,11 @@ public class Atract9FormatBuilder {
             var format = getAudioFormat(c);
 
             if (format != null) {
-                return (T) format;
+                return format;
             }
 
             createPcm16(configuration);
-            createFormat(configuration);
+            createFormat(configuration, c);
 
             return getAudioFormat(c);
         }
@@ -883,7 +917,7 @@ public class Atract9FormatBuilder {
 
             Class<?> formatToUse;
 
-            if (commonTypes.size() == 0 || commonTypes.size() == 1 && commonTypes.contains(Pcm16Format.class)) {
+            if (commonTypes.isEmpty() || commonTypes.size() == 1 && commonTypes.contains(Pcm16Format.class)) {
                 formatToUse = Pcm16Format.class;
                 for (AudioData a : audio) {
                     a.createPcm16(null);
@@ -892,26 +926,35 @@ public class Atract9FormatBuilder {
                 formatToUse = commonTypes.stream().filter(x -> x != Pcm16Format.class).findFirst().get();
             }
 
-            IAudioFormat combined = audio[0].formats.get(formatToUse);
+            IAudioFormat[] combined = new IAudioFormat[] { audio[0].formats.get(formatToUse) };
 
             Arrays.stream(audio).map(x -> x.formats.get(formatToUse)).skip(1).forEach(format -> {
-                if (combined.tryAdd(format, /* out */ combined) == false) {
+                if (!combined[0].tryAdd(format, /* out */ combined)) {
                     throw new IllegalArgumentException("Audio streams cannot be added together");
                 }
             });
 
-            return new AudioData(combined);
+            return new AudioData(combined[0]);
         }
 
+        @SuppressWarnings("unchecked")
         private <T extends IAudioFormat> T getAudioFormat(Class<T> c) {
-            IAudioFormat format = formats.getOrDefault(c.getClass(), null);
+            IAudioFormat format = formats.get(c);
 
             return (T) format;
         }
 
-        private <T extends IAudioFormat> void createFormat(CodecParameters configuration /*= null*/) {
+        protected <T extends IAudioFormat> T newAudioFormat(Class<T> c) {
+            try {
+                return c.getDeclaredConstructor().newInstance();
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+
+        private <T extends IAudioFormat> void createFormat(CodecParameters configuration /* = null */, Class<T> c) {
             var pcm = this.getAudioFormat(Pcm16Format.class);
-            addFormat(new Pcm16Format().encodeFromPcm16(pcm, configuration));
+            addFormat(newAudioFormat(c).encodeFromPcm16(pcm, configuration));
         }
 
         private void createPcm16(CodecParameters configuration /* = null */) {
@@ -921,6 +964,7 @@ public class Atract9FormatBuilder {
         }
     }
 
+    /** */
     public static class Configuration {
 
         public IProgressReport progress;
@@ -933,6 +977,7 @@ public class Atract9FormatBuilder {
         public boolean trimFile = true;
     }
 
+    /** */
     public static class AudioWithConfig {
 
         public AudioWithConfig(IAudioFormat audioFormat, Configuration configuration) {
@@ -949,6 +994,7 @@ public class Atract9FormatBuilder {
         public Configuration configuration;
     }
 
+    /** */
     public interface IProgressReport {
 
         /**
@@ -980,6 +1026,7 @@ public class Atract9FormatBuilder {
         void logMessage(String message);
     }
 
+    /** */
     public static class CodecParameters {
 
         public IProgressReport progress;
@@ -995,6 +1042,7 @@ public class Atract9FormatBuilder {
         }
     }
 
+    /** */
     public static class Pcm16FormatBuilder extends AudioFormatBaseBuilder<Pcm16Format, Pcm16FormatBuilder, CodecParameters> {
 
         public short[][] channels;
@@ -1061,7 +1109,7 @@ public class Atract9FormatBuilder {
         @Override
         protected Pcm16Format addInternal(Pcm16Format pcm16) {
             Pcm16FormatBuilder copy = getCloneBuilder();
-            copy.channels = Concat(short[].class, channels, pcm16.channels);
+            copy.channels = concat(short[].class, channels, pcm16.channels);
             return copy.build();
         }
 
@@ -1090,6 +1138,7 @@ public class Atract9FormatBuilder {
         }
     }
 
+    /** */
     public interface IAudioFormat {
 
         int getSampleCount();
@@ -1113,7 +1162,7 @@ public class Atract9FormatBuilder {
 
         IAudioFormat getChannels(int... channelRange);
 
-        boolean tryAdd(IAudioFormat format, /* out */ IAudioFormat result);
+        boolean tryAdd(IAudioFormat format, /* out */ IAudioFormat[] result);
     }
 
     /**
@@ -1192,6 +1241,7 @@ public class Atract9FormatBuilder {
         }
     }
 
+    /** */
     public static abstract class AudioFormatBase<TFormat extends AudioFormatBase<TFormat, TBuilder, TConfig>, TBuilder extends AudioFormatBaseBuilder<TFormat, TBuilder, TConfig>, TConfig extends CodecParameters> implements IAudioFormat {
 
         Class<TConfig> c;
@@ -1281,12 +1331,12 @@ public class Atract9FormatBuilder {
         }
 
         @Override
-        public boolean tryAdd(IAudioFormat format, /* out */ IAudioFormat result) {
-            result = null;
+        public boolean tryAdd(IAudioFormat format, /* out */ IAudioFormat[] result) {
+            result[0] = null;
             var castFormat = (TFormat) format;
             if (castFormat == null) return false;
             try {
-                result = add(castFormat);
+                result[0] = add(castFormat);
             } catch (Exception e) {
                 return false;
             }
@@ -1331,6 +1381,7 @@ public class Atract9FormatBuilder {
         }
     }
 
+    /** */
     public static abstract class AudioFormatBaseBuilder<TFormat extends AudioFormatBase<TFormat, TBuilder, TConfig>, TBuilder extends AudioFormatBaseBuilder<TFormat, TBuilder, TConfig>, TConfig extends CodecParameters> {
 
         public abstract int getChannelCount();
@@ -1381,6 +1432,7 @@ public class Atract9FormatBuilder {
         }
     }
 
+    /** */
     public static class Atrac9Parameters extends CodecParameters {
 
         public Atrac9Parameters() {
@@ -1391,6 +1443,7 @@ public class Atract9FormatBuilder {
         }
     }
 
+    /** */
     public static class Atrac9Format extends AudioFormatBase<Atrac9Format, Atrac9FormatBuilder, Atrac9Parameters> {
 
         public byte[][] audioData;
@@ -1420,18 +1473,21 @@ public class Atract9FormatBuilder {
 
         private short[][] decode(CodecParameters parameters) {
             IProgressReport progress = Objects.requireNonNull(parameters).progress;
-            Objects.requireNonNull(progress).setTotal(audioData.length);
+            if (progress != null) progress.setTotal(audioData.length);
 
             var decoder = new Atrac9Decoder();
             decoder.initialize(config.getConfigData());
             Atrac9Config config = decoder.getConfig();
-            var pcmOut = CreateJaggedArray(short[][].class, config.getChannelCount(), getSampleCount());
-            var pcmBuffer = CreateJaggedArray(short[][].class, config.getChannelCount(), config.getSuperframeSamples());
+Debug.println(Level.FINER, "array: short[][], " + config.getChannelCount() + " x " + getSampleCount());
+            var pcmOut = createJaggedArray(short[][].class, config.getChannelCount(), getSampleCount());
+Debug.println(Level.FINER, "array: pcmOut, " + pcmOut.length + " x " + pcmOut[0].length);
+            var pcmBuffer = createJaggedArray(short[][].class, config.getChannelCount(), config.getSuperframeSamples());
+Debug.println(Level.FINER, "array: pcmBuffer, " + pcmOut.length + " x " + pcmBuffer[0].length);
 
             for (int i = 0; i < audioData.length; i++) {
                 decoder.decode(audioData[i], pcmBuffer);
                 copyBuffer(pcmBuffer, pcmOut, encoderDelay, i);
-                Objects.requireNonNull(progress).reportAdd(1);
+                if (progress != null) progress.reportAdd(1);
             }
             return pcmOut;
         }
@@ -1447,7 +1503,7 @@ public class Atract9FormatBuilder {
 
             int currentIndex = bufferIndex * bufferLength - startIndex;
             int remainingElements = Math.min(outLength - currentIndex, outLength);
-            int srcStart = Clamp(0 - currentIndex, 0, bufferLength);
+            int srcStart = clamp(0 - currentIndex, 0, bufferLength);
             int destStart = Math.max(currentIndex, 0);
 
             int length = Math.min(bufferLength - srcStart, remainingElements);
@@ -1479,6 +1535,7 @@ public class Atract9FormatBuilder {
         }
     }
 
+    /** */
     public static class Atrac9FormatBuilder extends AudioFormatBaseBuilder<Atrac9Format, Atrac9FormatBuilder, Atrac9Parameters> {
 
         public Atrac9Config config;

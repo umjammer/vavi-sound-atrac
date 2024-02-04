@@ -103,11 +103,11 @@ class ScaleFactors {
 
         for (int i = 1; i < channel.getBlock().getExtensionUnit(); i++) {
             int delta = Unpack.readHuffmanValue(codebook, reader, false);
-            sf[i] = (sf[i - 1] + delta) & (codebook.ValueMax - 1);
+            sf[i] = (sf[i - 1] + delta) & (codebook.valueMax - 1);
         }
 
         for (int i = 0; i < channel.getBlock().getExtensionUnit(); i++) {
-            sf[i] += baseValue - weights[i];
+            sf[i] += baseValue - (weights[i] & 0xff);
         }
     }
 
@@ -138,7 +138,7 @@ class ScaleFactors {
 
         for (int i = 1; i < unitCount; i++) {
             int delta = Unpack.readHuffmanValue(codebook, reader, false);
-            sf[i] = (sf[i - 1] + delta) & (codebook.ValueMax - 1);
+            sf[i] = (sf[i - 1] + delta) & (codebook.valueMax - 1);
         }
 
         for (int i = 0; i < unitCount; i++) {

@@ -90,7 +90,7 @@ public class BitBuffer implements IBitReader {
 
 	public void writeByte(int n) {
 		for (int bit = 7; bit >= 0; bit--) {
-			writeBit((n >> bit) & 0x1);
+			writeBit((n >>> bit) & 0x1);
 		}
 	}
 

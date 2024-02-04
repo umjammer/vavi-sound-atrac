@@ -123,11 +123,13 @@ public class Atrac9Decoder {
     }
 
     private void pcmFloatToShort(short[][] pcmOut, int start) {
+//Debug.println("pcmOut: " + Arrays.toString(pcmOut));
         int endSample = start + config.getFrameSamples();
         int channelNum = 0;
         for (Block block : frame.getBlocks()) {
             for (Channel channel : block.getChannels()) {
                 double[] pcmSrc = channel.getPcm();
+//Debug.println("channelNum: " + channelNum + ", pcmDest: " + pcmOut[channelNum]);
                 short[] pcmDest = pcmOut[channelNum++];
                 for (int d = 0, s = start; s < endSample; d++, s++) {
                     double sample = pcmSrc[d];

@@ -78,7 +78,7 @@ class Unpack {
         readExtensionParams(reader, block);
 
         for (Channel channel : channels) {
-            channel.UpdateCodedUnits();
+            channel.updateCodedUnits();
 
             ScaleFactors.read(reader, channel);
             BitAllocation.calculateMask(channel);
@@ -117,7 +117,7 @@ class Unpack {
             block.setExtensionBand(block.getExtensionBand() + minBandCount);
 
             if (block.getExtensionBand() < block.getBandCount() || block.getExtensionBand() > maxExtensionBand) {
-                throw new IllegalArgumentException();
+                throw new IllegalArgumentException(String.format("assert not extensionBand:%d < count:%d || extensionBand:%d > max:%d", block.getExtensionBand(), block.getBandCount(), block.getExtensionBand(), maxExtensionBand));
             }
 
             block.setExtensionUnit(Tables.BandToQuantUnitCount[block.getExtensionBand()]);
@@ -167,7 +167,7 @@ class Unpack {
 
         block.setPrimaryChannelIndex(reader.readInt(1));
         block.setHasJointStereoSigns(reader.readBool());
-        if (block.isHasJointStereoSigns()) {
+        if (block.hasJointStereoSigns()) {
             for (int i = block.getStereoQuantizationUnit(); i < block.getQuantizationUnitCount(); i++) {
                 block.getJointStereoSigns()[i] = reader.readInt(1);
             }
@@ -186,16 +186,16 @@ class Unpack {
             if (block.getBlockType() == BlockType.Stereo) {
                 readHeader(reader, bexBand[0], block.getChannels()[1]);
             } else {
-                reader.position += 1;
+                reader.setPosition(reader.getPosition() + 1);
             }
         }
         block.setHasExtensionData(reader.readBool());
 
-        if (!block.isHasExtensionData()) return;
+        if (!block.hasExtensionData()) return;
         if (!block.isBandExtensionEnabled()) {
             block.setBexMode(reader.readInt(2));
             block.setBexDataLength(reader.readInt(5));
-            reader.position += block.getBexDataLength();
+            reader.setPosition(reader.getPosition() + block.getBexDataLength());
             return;
         }
 
@@ -203,7 +203,8 @@ class Unpack {
 
         block.setBexDataLength(reader.readInt(5));
         if (block.getBexDataLength() <= 0) return;
-        int bexDataEnd = reader.position + block.getBexDataLength();
+        reader.setPosition(reader.getPosition() + block.getBexDataLength());
+        int bexDataEnd = reader.getPosition();
 
         readData(reader, bexBand[0], block.getChannels()[0]);
 
@@ -212,7 +213,7 @@ class Unpack {
         }
 
         // Make sure we didn't read too many bits
-        if (reader.position > bexDataEnd) {
+        if (reader.getPosition() > bexDataEnd) {
             throw new IllegalArgumentException();
         }
     }
@@ -282,7 +283,7 @@ class Unpack {
             int precision = channel.getPrecisions()[i] + 1;
             if (precision <= maxHuffPrecision) {
                 HuffmanCodebook huff = Tables.HuffmanSpectrum[channel.getCodebookSet()[i]][precision][Tables.QuantUnitToCodebookIndex[i]];
-                int groupCount = subbandCount >> huff.ValueCountPower;
+                int groupCount = subbandCount >>> huff.valueCountPower;
                 for (int j = 0; j < groupCount; j++) {
                     values[j] = readHuffmanValue(huff, reader, false);
                 }
@@ -314,24 +315,24 @@ class Unpack {
     }
 
     private static void decodeHuffmanValues(int[] spectrum, int index, int bandCount, HuffmanCodebook huff, int[] values) {
-        int valueCount = bandCount >> huff.ValueCountPower;
-        int mask = (1 << huff.ValueBits) - 1;
+        int valueCount = bandCount >>> huff.valueCountPower;
+        int mask = (1 << huff.valueBits) - 1;
 
         for (int i = 0; i < valueCount; i++) {
             int value = values[i];
-            for (int j = 0; j < huff.ValueCount; j++) {
-                spectrum[index++] = Bit.signExtend32(value & mask, huff.ValueBits);
-                value >>= huff.ValueBits;
+            for (int j = 0; j < huff.valueCount; j++) {
+                spectrum[index++] = Bit.signExtend32(value & mask, huff.valueBits);
+                value >>>= huff.valueBits;
             }
         }
     }
 
     public static int readHuffmanValue(HuffmanCodebook huff, BitReader reader, boolean signed /* = false */) {
-        int code = reader.peekInt(huff.MaxBitSize);
-        byte value = huff.Lookup[code];
-        int bits = huff.Bits[value];
-        reader.position += bits;
-        return signed ? Bit.signExtend32(value, huff.ValueBits) : value;
+        int code = reader.peekInt(huff.maxBitSize);
+        int value = huff.lookup[code] & 0xff;
+        int bits = huff.bits[value] & 0xff;
+        reader.setPosition(reader.getPosition() + bits);
+        return signed ? Bit.signExtend32(value, huff.valueBits) : value;
     }
 
     private static void unpackLfeBlock(BitReader reader, Block block) {

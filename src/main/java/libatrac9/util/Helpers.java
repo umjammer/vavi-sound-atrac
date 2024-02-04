@@ -51,18 +51,19 @@ public class Helpers {
      * @return The floor of the base 2 logarithm of {@code value}
      */
     public static int log2(int value) {
-        value |= value >> 1;
-        value |= value >> 2;
-        value |= value >> 4;
-        value |= value >> 8;
-        value |= value >> 16;
+//        value |= value >> 1;
+//        value |= value >> 2;
+//        value |= value >> 4;
+//        value |= value >> 8;
+//        value |= value >> 16;
 
-        return MultiplyDeBruijnBitPosition[(value * 0x07C4ACDD) >> 27];
+//        return MultiplyDeBruijnBitPosition[(value * 0x07C4ACDD) >> 27];
+        return (int) Math.round(Math.log(value) / Math.log(2));
     }
 
-    private static final int[] MultiplyDeBruijnBitPosition = {
-            0, 9, 1, 10, 13, 21, 2, 29, 11, 14, 16, 18, 22, 25, 3, 30,
-            8, 12, 20, 28, 15, 17, 24, 7, 19, 27, 23, 6, 26, 5, 4, 31
-    };
+//    private static final int[] MultiplyDeBruijnBitPosition = {
+//            0, 9, 1, 10, 13, 21, 2, 29, 11, 14, 16, 18, 22, 25, 3, 30,
+//            8, 12, 20, 28, 15, 17, 24, 7, 19, 27, 23, 6, 26, 5, 4, 31
+//    };
 }
 

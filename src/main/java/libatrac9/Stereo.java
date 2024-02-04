@@ -36,8 +36,8 @@ class Stereo {
         int stereoUnits = block.getStereoQuantizationUnit();
         if (stereoUnits >= totalUnits) return;
 
-        Channel source = block.PrimaryChannel();
-        Channel dest = block.SecondaryChannel();
+        Channel source = block.getPrimaryChannel();
+        Channel dest = block.getSecondaryChannel();
 
         for (int i = stereoUnits; i < totalUnits; i++) {
             int sign = block.getJointStereoSigns()[i];

@@ -27,9 +27,9 @@ package libatrac9;
 
 class Frame {
 
-    private Atrac9Config config;
+    private final Atrac9Config config;
     private int frameIndex;
-    private Block[] blocks;
+    private final Block[] blocks;
 
     public Atrac9Config getConfig() {
         return config;

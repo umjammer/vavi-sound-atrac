@@ -30,35 +30,36 @@ import libatrac9.util.Helpers;
 class HuffmanCodebook {
 
     public HuffmanCodebook(short[] codes, byte[] bits, byte valueCountPower) {
-        Codes = codes;
-        Bits = bits;
-        if (Codes == null || Bits == null) return;
+        this.codes = codes;
+        this.bits = bits;
+        if (this.codes == null || this.bits == null) return;
 
-        ValueCount = 1 << valueCountPower;
-        ValueCountPower = valueCountPower;
-        ValueBits = Helpers.log2(codes.length) >> valueCountPower;
-        ValueMax = 1 << ValueBits;
+        valueCount = 1 << valueCountPower;
+        this.valueCountPower = valueCountPower;
+        valueBits = Helpers.log2(codes.length) >>> valueCountPower;
+//Debug.println("valueBits: " + valueBits);
+        valueMax = 1 << valueBits;
 
         int max = 0;
         for (byte bitSize : bits) {
             max = Math.max(max, bitSize);
         }
 
-        MaxBitSize = max;
-        Lookup = CreateLookupTable();
+        maxBitSize = max;
+        lookup = CreateLookupTable();
     }
 
     private byte[] CreateLookupTable() {
-        if (Codes == null || Bits == null) return null;
+        if (codes == null || bits == null) return null;
 
-        int tableSize = 1 << MaxBitSize;
+        int tableSize = 1 << maxBitSize;
         var dest = new byte[tableSize];
 
-        for (int i = 0; i < Bits.length; i++) {
-            if (Bits[i] == 0) continue;
-            int unusedBits = MaxBitSize - Bits[i];
+        for (int i = 0; i < bits.length; i++) {
+            if (bits[i] == 0) continue;
+            int unusedBits = maxBitSize - bits[i];
 
-            int start = Codes[i] << unusedBits;
+            int start = codes[i] << unusedBits;
             int length = 1 << unusedBits;
             int end = start + length;
 
@@ -69,45 +70,45 @@ class HuffmanCodebook {
         return dest;
     }
 
-    public short[] Codes;
-    public byte[] Bits;
-    public byte[] Lookup;
-    public int ValueCount;
-    public int ValueCountPower;
-    public int ValueBits;
-    public int ValueMax;
-    public int MaxBitSize;
+    public short[] codes;
+    public byte[] bits;
+    public byte[] lookup;
+    public int valueCount;
+    public int valueCountPower;
+    public int valueBits;
+    public int valueMax;
+    public int maxBitSize;
 
     public short[] getCodes() {
-        return Codes;
+        return codes;
     }
 
     public byte[] getBits() {
-        return Bits;
+        return bits;
     }
 
     public byte[] getLookup() {
-        return Lookup;
+        return lookup;
     }
 
     public int getValueCount() {
-        return ValueCount;
+        return valueCount;
     }
 
     public int getValueCountPower() {
-        return ValueCountPower;
+        return valueCountPower;
     }
 
     public int getValueBits() {
-        return ValueBits;
+        return valueBits;
     }
 
     public int getValueMax() {
-        return ValueMax;
+        return valueMax;
     }
 
     public int getMaxBitSize() {
-        return MaxBitSize;
+        return maxBitSize;
     }
 }
 

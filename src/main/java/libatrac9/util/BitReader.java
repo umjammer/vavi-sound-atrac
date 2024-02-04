@@ -24,8 +24,7 @@
 
 package libatrac9.util;
 
-
-import java.util.Objects;
+import vavi.util.ByteUtil;
 
 
 public class BitReader {
@@ -34,7 +33,7 @@ public class BitReader {
 
     private int lengthBits;
 
-    public int position;
+    private int position;
 
     public byte[] getBuffer() {
         return buffer;
@@ -66,7 +65,7 @@ public class BitReader {
 
     public void setBuffer(byte[] buffer) {
         this.buffer = buffer;
-        lengthBits = Objects.requireNonNull(this.buffer).length * 8;
+        lengthBits = this.buffer != null ? this.buffer.length * 8 : 0;
         position = 0;
     }
 
@@ -111,23 +110,26 @@ public class BitReader {
         int bitIndex = position % 8;
 
         if (bitCount <= 9 && remaining() >= 16) {
-            int value = buffer[byteIndex] << 8 | buffer[byteIndex + 1];
+//            int value = buffer[byteIndex] << 8 | buffer[byteIndex + 1];
+            int value = ByteUtil.readBeShort(buffer, byteIndex) & 0xffff;
             value &= 0xFFFF >> bitIndex;
-            value >>= 16 - bitCount - bitIndex;
+            value >>>= 16 - bitCount - bitIndex;
             return value;
         }
 
         if (bitCount <= 17 && remaining() >= 24) {
-            int value = buffer[byteIndex] << 16 | buffer[byteIndex + 1] << 8 | buffer[byteIndex + 2];
-            value &= 0xFFFFFF >> bitIndex;
-            value >>= 24 - bitCount - bitIndex;
+//            int value = buffer[byteIndex] << 16 | buffer[byteIndex + 1] << 8 | buffer[byteIndex + 2];
+            int value = ByteUtil.readBe24(buffer, byteIndex);
+            value &= 0xFFFF_FF >> bitIndex;
+            value >>>= 24 - bitCount - bitIndex;
             return value;
         }
 
         if (bitCount <= 25 && remaining() >= 32) {
-            int value = buffer[byteIndex] << 24 | buffer[byteIndex + 1] << 16 | buffer[byteIndex + 2] << 8 | buffer[byteIndex + 3];
-            value &= (int) (0xFFFFFFFF >> bitIndex);
-            value >>= 32 - bitCount - bitIndex;
+//            int value = buffer[byteIndex] << 24 | buffer[byteIndex + 1] << 16 | buffer[byteIndex + 2] << 8 | buffer[byteIndex + 3];
+            int value = ByteUtil.readBeInt(buffer, byteIndex);
+            value &= (int) (0xFFFF_FFFF >> bitIndex);
+            value >>>= 32 - bitCount - bitIndex;
             return value;
         }
         return peekIntFallback(bitCount);

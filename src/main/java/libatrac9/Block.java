@@ -27,87 +27,87 @@ package libatrac9;
 
 class Block {
 
-    private Atrac9Config config;
-    private BlockType BlockType;
-    private int BlockIndex;
-    private Frame Frame;
+    private final Atrac9Config config;
+    private final BlockType blockType;
+    private final int blockIndex;
+    private final Frame frame;
 
-    private Channel[] Channels;
-    private int ChannelCount;
+    private final Channel[] channels;
+    private final int channelCount;
 
     public Atrac9Config getConfig() {
         return config;
     }
 
     public BlockType getBlockType() {
-        return BlockType;
+        return blockType;
     }
 
     public int getBlockIndex() {
-        return BlockIndex;
+        return blockIndex;
     }
 
     public Frame getFrame() {
-        return Frame;
+        return frame;
     }
 
     public Channel[] getChannels() {
-        return Channels;
+        return channels;
     }
 
     public int getChannelCount() {
-        return ChannelCount;
+        return channelCount;
     }
 
-    private boolean FirstInSuperframe;
-    private boolean ReuseBandParams;
+    private boolean firstInSuperframe;
+    private boolean reuseBandParams;
 
     public boolean isFirstInSuperframe() {
-        return FirstInSuperframe;
+        return firstInSuperframe;
     }
 
     public void setFirstInSuperframe(boolean firstInSuperframe) {
-        FirstInSuperframe = firstInSuperframe;
+        this.firstInSuperframe = firstInSuperframe;
     }
 
     public boolean isReuseBandParams() {
-        return ReuseBandParams;
+        return reuseBandParams;
     }
 
     public void setReuseBandParams(boolean reuseBandParams) {
-        ReuseBandParams = reuseBandParams;
+        this.reuseBandParams = reuseBandParams;
     }
 
-    private int BandCount;
-    private int StereoBand;
-    private int ExtensionBand;
+    private int bandCount;
+    private int stereoBand;
+    private int extensionBand;
     private int quantizationUnitCount;
     private int stereoQuantizationUnit;
-    private int ExtensionUnit;
-    private int QuantizationUnitsPrev;
+    private int extensionUnit;
+    private int quantizationUnitsPrev;
 
     public int getBandCount() {
-        return BandCount;
+        return bandCount;
     }
 
     public void setBandCount(int bandCount) {
-        BandCount = bandCount;
+        this.bandCount = bandCount;
     }
 
     public int getStereoBand() {
-        return StereoBand;
+        return stereoBand;
     }
 
     public void setStereoBand(int stereoBand) {
-        StereoBand = stereoBand;
+        this.stereoBand = stereoBand;
     }
 
     public int getExtensionBand() {
-        return ExtensionBand;
+        return extensionBand;
     }
 
     public void setExtensionBand(int extensionBand) {
-        ExtensionBand = extensionBand;
+        this.extensionBand = extensionBand;
     }
 
     public int getQuantizationUnitCount() {
@@ -127,162 +127,162 @@ class Block {
     }
 
     public int getExtensionUnit() {
-        return ExtensionUnit;
+        return extensionUnit;
     }
 
     public void setExtensionUnit(int extensionUnit) {
-        ExtensionUnit = extensionUnit;
+        this.extensionUnit = extensionUnit;
     }
 
     public int getQuantizationUnitsPrev() {
-        return QuantizationUnitsPrev;
+        return quantizationUnitsPrev;
     }
 
     public void setQuantizationUnitsPrev(int quantizationUnitsPrev) {
-        QuantizationUnitsPrev = quantizationUnitsPrev;
+        this.quantizationUnitsPrev = quantizationUnitsPrev;
     }
 
-    private int[] Gradient = new int[31];
+    private final int[] gradient = new int[31];
 
     public int getGradientMode() {
-        return GradientMode;
+        return gradientMode;
     }
 
     public int[] getGradient() {
-        return Gradient;
+        return gradient;
     }
 
-    private int GradientMode;
-    private int GradientStartUnit;
-    private int GradientStartValue;
-    private int GradientEndUnit;
-    private int GradientEndValue;
-    private int GradientBoundary;
+    private int gradientMode;
+    private int gradientStartUnit;
+    private int gradientStartValue;
+    private int gradientEndUnit;
+    private int gradientEndValue;
+    private int gradientBoundary;
 
     public void setGradientMode(int gradientMode) {
-        GradientMode = gradientMode;
+        this.gradientMode = gradientMode;
     }
 
     public int getGradientStartUnit() {
-        return GradientStartUnit;
+        return gradientStartUnit;
     }
 
     public void setGradientStartUnit(int gradientStartUnit) {
-        GradientStartUnit = gradientStartUnit;
+        this.gradientStartUnit = gradientStartUnit;
     }
 
     public int getGradientStartValue() {
-        return GradientStartValue;
+        return gradientStartValue;
     }
 
     public void setGradientStartValue(int gradientStartValue) {
-        GradientStartValue = gradientStartValue;
+        this.gradientStartValue = gradientStartValue;
     }
 
     public int getGradientEndUnit() {
-        return GradientEndUnit;
+        return gradientEndUnit;
     }
 
     public void setGradientEndUnit(int gradientEndUnit) {
-        GradientEndUnit = gradientEndUnit;
+        this.gradientEndUnit = gradientEndUnit;
     }
 
     public int getGradientEndValue() {
-        return GradientEndValue;
+        return gradientEndValue;
     }
 
     public void setGradientEndValue(int gradientEndValue) {
-        GradientEndValue = gradientEndValue;
+        this.gradientEndValue = gradientEndValue;
     }
 
     public int getGradientBoundary() {
-        return GradientBoundary;
+        return gradientBoundary;
     }
 
     public void setGradientBoundary(int gradientBoundary) {
-        GradientBoundary = gradientBoundary;
+        this.gradientBoundary = gradientBoundary;
     }
 
-    private int PrimaryChannelIndex;
+    private int primaryChannelIndex;
 
     public int getPrimaryChannelIndex() {
-        return PrimaryChannelIndex;
+        return primaryChannelIndex;
     }
 
     public void setPrimaryChannelIndex(int primaryChannelIndex) {
-        PrimaryChannelIndex = primaryChannelIndex;
+        this.primaryChannelIndex = primaryChannelIndex;
     }
 
-    private int[] JointStereoSigns = new int[30];
+    private final int[] jointStereoSigns = new int[30];
 
     public int[] getJointStereoSigns() {
-        return JointStereoSigns;
+        return jointStereoSigns;
     }
 
-    private boolean HasJointStereoSigns;
+    private boolean hasJointStereoSigns;
 
-    public boolean isHasJointStereoSigns() {
-        return HasJointStereoSigns;
+    public boolean hasJointStereoSigns() {
+        return hasJointStereoSigns;
     }
 
     public void setHasJointStereoSigns(boolean hasJointStereoSigns) {
-        HasJointStereoSigns = hasJointStereoSigns;
+        this.hasJointStereoSigns = hasJointStereoSigns;
     }
 
-    public Channel PrimaryChannel() {
-        return Channels[PrimaryChannelIndex == 0 ? 0 : 1];
+    public Channel getPrimaryChannel() {
+        return channels[primaryChannelIndex == 0 ? 0 : 1];
     }
 
-    public Channel SecondaryChannel() {
-        return Channels[PrimaryChannelIndex == 0 ? 1 : 0];
+    public Channel getSecondaryChannel() {
+        return channels[primaryChannelIndex == 0 ? 1 : 0];
     }
 
-    private boolean BandExtensionEnabled;
-    private boolean HasExtensionData;
-    private int BexDataLength;
-    private int BexMode;
+    private boolean bandExtensionEnabled;
+    private boolean hasExtensionData;
+    private int bexDataLength;
+    private int bexMode;
 
     public boolean isBandExtensionEnabled() {
-        return BandExtensionEnabled;
+        return bandExtensionEnabled;
     }
 
     public void setBandExtensionEnabled(boolean bandExtensionEnabled) {
-        BandExtensionEnabled = bandExtensionEnabled;
+        this.bandExtensionEnabled = bandExtensionEnabled;
     }
 
-    public boolean isHasExtensionData() {
-        return HasExtensionData;
+    public boolean hasExtensionData() {
+        return hasExtensionData;
     }
 
     public void setHasExtensionData(boolean hasExtensionData) {
-        HasExtensionData = hasExtensionData;
+        this.hasExtensionData = hasExtensionData;
     }
 
     public int getBexDataLength() {
-        return BexDataLength;
+        return bexDataLength;
     }
 
     public void setBexDataLength(int bexDataLength) {
-        BexDataLength = bexDataLength;
+        this.bexDataLength = bexDataLength;
     }
 
     public int getBexMode() {
-        return BexMode;
+        return bexMode;
     }
 
     public void setBexMode(int bexMode) {
-        BexMode = bexMode;
+        this.bexMode = bexMode;
     }
 
     public Block(Frame parentFrame, int blockIndex) {
-        Frame = parentFrame;
-        BlockIndex = blockIndex;
+        frame = parentFrame;
+        this.blockIndex = blockIndex;
         config = parentFrame.getConfig();
-        BlockType = config.getChannelConfig().getBlockTypes()[blockIndex];
-        ChannelCount = BlockTypeToChannelCount(BlockType);
-        Channels = new Channel[ChannelCount];
-        for (int i = 0; i < ChannelCount; i++) {
-            Channels[i] = new Channel(this, i);
+        blockType = config.getChannelConfig().getBlockTypes()[blockIndex];
+        channelCount = BlockTypeToChannelCount(blockType);
+        channels = new Channel[channelCount];
+        for (int i = 0; i < channelCount; i++) {
+            channels[i] = new Channel(this, i);
         }
     }
 

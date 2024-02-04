@@ -32,7 +32,7 @@ class Channel {
     private Atrac9Config config;
     private int channelIndex;
 
-    public boolean IsPrimary() {
+    public boolean isPrimary() {
         return block.getPrimaryChannelIndex() == channelIndex;
     }
 
@@ -55,8 +55,8 @@ class Channel {
         return mdct;
     }
 
-    private double[] pcm = new double[256];
-    private double[] spectra = new double[256];
+    private final double[] pcm = new double[256];
+    private final double[] spectra = new double[256];
 
     public double[] getPcm() {
         return pcm;
@@ -85,18 +85,18 @@ class Channel {
         this.scaleFactorCodingMode = scaleFactorCodingMode;
     }
 
-    private int[] scaleFactors = new int[31];
-    private int[] scaleFactorsPrev = new int[31];
+    private final int[] scaleFactors = new int[31];
+    private final int[] scaleFactorsPrev = new int[31];
 
-    private int[] precisions = new int[30];
-    private int[] precisionsFine = new int[30];
-    private int[] precisionMask = new int[30];
+    private final int[] precisions = new int[30];
+    private final int[] precisionsFine = new int[30];
+    private final int[] precisionMask = new int[30];
 
-    private int[] spectraValuesBuffer = new int[16];
-    private int[] codebookSet = new int[30];
+    private final int[] spectraValuesBuffer = new int[16];
+    private final int[] codebookSet = new int[30];
 
-    private int[] quantizedSpectra = new int[256];
-    private int[] quantizedSpectraFine = new int[256];
+    private final int[] quantizedSpectra = new int[256];
+    private final int[] quantizedSpectraFine = new int[256];
 
     public int[] getScaleFactors() {
         return scaleFactors;
@@ -144,8 +144,8 @@ class Channel {
 
     private int bexMode;
     private int bexValueCount;
-    private int[] bexValues = new int[4];
-    private double[] bexScales = new double[6];
+    private final int[] bexValues = new int[4];
+    private final double[] bexScales = new double[6];
     private Atrac9Rng rng;
 
     public int getBexMode() {
@@ -179,8 +179,8 @@ class Channel {
         mdct = new Mdct(config.getFrameSamplesPower(), Tables.ImdctWindow[config.getFrameSamplesPower() - 6], 1);
     }
 
-    public void UpdateCodedUnits() {
-        codedQuantUnits = IsPrimary() ? block.getQuantizationUnitCount() : block.getStereoQuantizationUnit();
+    public void updateCodedUnits() {
+        codedQuantUnits = isPrimary() ? block.getQuantizationUnitCount() : block.getStereoQuantizationUnit();
     }
 }
 

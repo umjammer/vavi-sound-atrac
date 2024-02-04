@@ -6,17 +6,22 @@ package libatrac9;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.function.BiFunction;
+import java.util.logging.Level;
 
 import dotnet4j.io.BinaryReader;
 import dotnet4j.io.Stream;
+import vavi.util.ByteUtil;
+import vavi.util.Debug;
 
-import static libatrac9.Utils.DeInterleave;
+import static libatrac9.Utils.deInterleave;
 import static libatrac9.Utils.divideByRoundUp;
 
 
@@ -40,11 +45,21 @@ public class Atrac9Reader {
             chunk.size = reader.readInt32();
             chunk.type = Utils.readUTF8String(reader, 4);
 
-            if (!Objects.equals(chunk.chunkId, "RIFF")) {
+            if (!chunk.chunkId.equals("RIFF")) {
                 throw new IllegalArgumentException("Not a valid RIFF file");
             }
 
+Debug.println(Level.FINER, chunk);
             return chunk;
+        }
+
+        @Override
+        public String toString() {
+            return new StringJoiner(", ", RiffChunk.class.getSimpleName() + "[", "]")
+                    .add("chunkId='" + chunkId + "'")
+                    .add("size=" + size)
+                    .add("type='" + type + "'")
+                    .toString();
         }
     }
 
@@ -57,6 +72,15 @@ public class Atrac9Reader {
         public RiffSubChunk(BinaryReader reader) throws IOException {
             subChunkId = Utils.readUTF8String(reader, 4);
             subChunkSize = reader.readInt32();
+        }
+
+        @Override
+        public String toString() {
+            return new StringJoiner(", ", RiffSubChunk.class.getSimpleName() + "[", "]")
+                    .add("subChunkId='" + subChunkId + "'")
+                    .add("subChunkSize=" + subChunkSize)
+                    .add("extra=" + Arrays.toString(extra))
+                    .toString();
         }
     }
 
@@ -75,14 +99,14 @@ public class Atrac9Reader {
 
         public int channelMask;
         public UUID subFormat;
-        public byte[] Extra;
+        public byte[] extra;
 
         protected WaveFormatExtensible(BinaryReader reader) throws IOException {
             size = reader.readInt16();
 
             validBitsPerSample = reader.readInt16();
             channelMask = reader.readUInt32();
-            subFormat = UUID.nameUUIDFromBytes(reader.readBytes(16));
+            subFormat = ByteUtil.readLeUUID(reader.readBytes(16), 0);
         }
 
         public static WaveFormatExtensible parse(RiffParser parser, BinaryReader reader) {
@@ -112,20 +136,21 @@ public class Atrac9Reader {
 
         protected WaveFmtChunk(RiffParser parser, BinaryReader reader) throws IOException {
             super(reader);
-            formatTag = reader.readUInt16();
-            channelCount = reader.readInt16();
+            formatTag = reader.readUInt16() & 0xffff;
+            channelCount = reader.readInt16() & 0xffff;
             sampleRate = reader.readInt32();
             avgBytesPerSec = reader.readInt32();
-            blockAlign = reader.readInt16();
-            bitsPerSample = reader.readInt16();
+            blockAlign = reader.readInt16() & 0xffff;
+            bitsPerSample = reader.readInt16() & 0xffff;
 
+//Debug.printf("formatTag: %04x, formatExtensibleParser: %s", formatTag, parser.formatExtensibleParser);
             if (formatTag == WaveFormatTags.WaveFormatExtensible && parser.formatExtensibleParser != null) {
                 long startOffset = reader.getBaseStream().position() + 2;
                 ext = parser.formatExtensibleParser.apply(parser, reader);
 
                 long endOffset = startOffset + ext.size;
                 int remainingBytes = (int) Math.max(endOffset - reader.getBaseStream().position(), 0);
-                ext.Extra = reader.readBytes(remainingBytes);
+                ext.extra = reader.readBytes(remainingBytes);
             }
         }
 
@@ -272,6 +297,7 @@ public class Atrac9Reader {
                     RiffSubChunk subChunk = parseSubChunk(reader);
                     subChunks.put(subChunk.subChunkId, subChunk);
                 }
+Debug.println(Level.FINER, subChunks);
             }
         }
 
@@ -281,7 +307,9 @@ public class Atrac9Reader {
 
         @SuppressWarnings("unchecked")
         public <T extends RiffSubChunk> T getSubChunk(String id) {
+//Debug.println(Level.FINER, "[" + id + "], " + subChunks);
             RiffSubChunk chunk = subChunks.get(id);
+//Debug.println(Level.FINER, chunk);
             return (T) chunk;
         }
 
@@ -290,6 +318,7 @@ public class Atrac9Reader {
             reader.getBaseStream().position(reader.getBaseStream().position() - 4);
             long startOffset = reader.getBaseStream().position() + 8;
             BiFunction<RiffParser, BinaryReader, RiffSubChunk> parser = registeredSubChunks.get(id);
+//Debug.println(Level.FINER, parser != null ? parser.getClass().getName() : "parser is null");
             RiffSubChunk subChunk = parser != null ? parser.apply(this, reader) : new RiffSubChunk(reader);
 
             long endOffset = startOffset + subChunk.subChunkSize;
@@ -297,6 +326,7 @@ public class Atrac9Reader {
             subChunk.extra = reader.readBytes(remainingBytes);
 
             reader.getBaseStream().position(endOffset + (endOffset & 1)); // Subchunks are 2-byte aligned
+Debug.println(Level.FINER, subChunk);
             return subChunk;
         }
     }
@@ -363,6 +393,7 @@ public class Atrac9Reader {
             // Some AT9 files have an invalid number in there.
             // Calculate the size try the ATRAC9 DataConfig instead.
 
+Debug.println(Level.FINER, parser.<WaveFmtChunk>getSubChunk("fmt "));
             At9WaveExtensible ext = (At9WaveExtensible) Objects.requireNonNull(parser.<WaveFmtChunk>getSubChunk("fmt ")).ext;
             if (ext == null)
                 throw new IllegalArgumentException("fmt chunk must come before data chunk");
@@ -379,7 +410,7 @@ public class Atrac9Reader {
                 throw new IllegalArgumentException("Required AT9 length is greater than the number of bytes remaining in the file.");
             }
 
-            audioData = DeInterleave(reader.getBaseStream(), dataSize, config.getSuperframeBytes(), frameCount, -1);
+            audioData = deInterleave(reader.getBaseStream(), dataSize, config.getSuperframeBytes(), frameCount, -1);
         }
 
         public static At9DataChunk parseAt9(RiffParser parser, BinaryReader reader) {

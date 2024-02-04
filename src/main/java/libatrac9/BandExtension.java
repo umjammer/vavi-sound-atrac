@@ -28,7 +28,7 @@ package libatrac9;
 class BandExtension {
 
     public static void applyBandExtension(Block block) {
-        if (!block.isBandExtensionEnabled() || !block.isHasExtensionData()) return;
+        if (!block.isBandExtensionEnabled() || !block.hasExtensionData()) return;
 
         for (Channel channel : block.getChannels()) {
             applyBandExtensionChannel(channel);

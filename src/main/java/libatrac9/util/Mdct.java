@@ -90,6 +90,8 @@ public class Mdct {
                 }
                 _tableBits = maxBits;
             }
+//Debug.println("sinTables: " + sinTables.size() + ", " + sinTables);
+//Debug.println("cosTables: " + cosTables.size() + ", " + cosTables);
         }
     }
 
@@ -126,6 +128,7 @@ public class Mdct {
         double[] sinTable = sinTables.get(mdctBits);
         double[] cosTable = cosTables.get(mdctBits);
         double[] dctTemp = scratchDct;
+//Debug.println("mdctBits: " + mdctBits);
 
         int size = mdctSize;
         int lastIndex = size - 1;
@@ -174,8 +177,8 @@ public class Mdct {
 
     private static void generateTrigTables(int sizeBits, /* out */ double[][] sin, /* out */ double[][] cos) {
         int size = 1 << sizeBits;
-        sin = new double[0][size];
-        cos = new double[0][size];
+        sin[0] = new double[size];
+        cos[0] = new double[size];
 
         for (int i = 0; i < size; i++) {
             double value = Math.PI * (4 * i + 1) / (4 * size);
