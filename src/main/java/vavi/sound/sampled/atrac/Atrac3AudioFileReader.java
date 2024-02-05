@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.sound.sampled.atrac3;
+package vavi.sound.sampled.atrac;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -24,8 +24,8 @@ import javax.sound.sampled.spi.AudioFileReader;
 import vavi.util.ByteUtil;
 import vavi.util.Debug;
 
-import static vavi.sound.sampled.atrac3.Atrac3Encoding.ATRAC3;
-import static vavi.sound.sampled.atrac3.Atrac3Encoding.ATRAC3PLUS;
+import static vavi.sound.sampled.atrac.AtracEncoding.ATRAC3;
+import static vavi.sound.sampled.atrac.AtracEncoding.ATRAC3PLUS;
 
 
 /**
@@ -90,8 +90,8 @@ Debug.println(Level.FINE, "enter available: " + bitStream.available());
             int channels = ByteUtil.readLeShort(b, 22) & 0xffff;
             int sampleRate = ByteUtil.readLeInt(b, 24);
             AudioFormat.Encoding encoding = switch (codec) {
-                case Atrac3Encoding.AT3_MAGIC -> ATRAC3;
-                case Atrac3Encoding.AT3_PLUS_MAGIC -> ATRAC3PLUS;
+                case AtracEncoding.AT3_MAGIC -> ATRAC3;
+                case AtracEncoding.AT3_PLUS_MAGIC -> ATRAC3PLUS;
                 default -> throw new UnsupportedAudioFileException("codec: " + codec);
             };
             format = new AudioFormat(encoding,
@@ -111,7 +111,7 @@ Debug.println(Level.FINE, "enter available: " + bitStream.available());
             }
 Debug.println(Level.FINE, "finally available: " + bitStream.available());
         }
-        return new AudioFileFormat(Atrac3FileFormatType.ATRAC, format, AudioSystem.NOT_SPECIFIED);
+        return new AudioFileFormat(AtracFileFormatType.ATRAC, format, AudioSystem.NOT_SPECIFIED);
     }
 
     @Override

@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.sound.sampled.atrac3;
+package vavi.sound.sampled.atrac;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -22,14 +22,12 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineEvent;
 import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
-import javax.sound.sampled.spi.AudioFileReader;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import vavi.sound.SoundUtil;
 import vavi.util.Debug;
-import vavi.util.StringUtil;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
@@ -160,7 +158,7 @@ Debug.println("OUT: " + outAudioFormat);
     void test2() throws Exception {
         URL url = Paths.get(at3).toUri().toURL();
         AudioInputStream ais = AudioSystem.getAudioInputStream(url);
-        assertEquals(Atrac3Encoding.ATRAC3PLUS, ais.getFormat().getEncoding());
+        assertEquals(AtracEncoding.ATRAC3PLUS, ais.getFormat().getEncoding());
     }
 
     @Test
@@ -168,7 +166,7 @@ Debug.println("OUT: " + outAudioFormat);
     void test3() throws Exception {
         File file = Paths.get(at3).toFile();
         AudioInputStream ais = AudioSystem.getAudioInputStream(file);
-        assertEquals(Atrac3Encoding.ATRAC3PLUS, ais.getFormat().getEncoding());
+        assertEquals(AtracEncoding.ATRAC3PLUS, ais.getFormat().getEncoding());
     }
 
     @Test

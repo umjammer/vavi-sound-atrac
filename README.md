@@ -38,4 +38,4 @@ Pure Java ATRAC3plus decoder (Java Sound SPI) powered by [Jpcsp](https://github.
  * file extension is `aa3`?
  * atrac9
  * ~~project name vavi-sound-atrac3plus -> vavi-sound-atrac~~
- * package name vavi.sound.sampled.atrac3 -> vavi.sound.sampled.atrac 
+ * ~~package name vavi.sound.sampled.atrac -> vavi.sound.sampled.atrac~~ 

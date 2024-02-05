@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.sound.sampled.atrac3;
+package vavi.sound.sampled.atrac;
 
 import java.io.IOException;
 import javax.sound.sampled.AudioFormat;
@@ -24,22 +24,22 @@ public class Atrac3FormatConversionProvider extends FormatConversionProvider {
     @Override
     public AudioFormat.Encoding[] getSourceEncodings() {
         return new AudioFormat.Encoding[] {
-                Atrac3Encoding.ATRAC3, Atrac3Encoding.ATRAC3PLUS, AudioFormat.Encoding.PCM_SIGNED
+                AtracEncoding.ATRAC3, AtracEncoding.ATRAC3PLUS, AudioFormat.Encoding.PCM_SIGNED
         };
     }
 
     @Override
     public AudioFormat.Encoding[] getTargetEncodings() {
         return new AudioFormat.Encoding[] {
-                Atrac3Encoding.ATRAC3, Atrac3Encoding.ATRAC3PLUS, AudioFormat.Encoding.PCM_SIGNED
+                AtracEncoding.ATRAC3, AtracEncoding.ATRAC3PLUS, AudioFormat.Encoding.PCM_SIGNED
         };
     }
 
     @Override
     public AudioFormat.Encoding[] getTargetEncodings(AudioFormat sourceFormat) {
         if (sourceFormat.getEncoding().equals(AudioFormat.Encoding.PCM_SIGNED)) {
-            return new AudioFormat.Encoding[] {Atrac3Encoding.ATRAC3, Atrac3Encoding.ATRAC3PLUS};
-        } else if (sourceFormat.getEncoding() instanceof Atrac3Encoding) {
+            return new AudioFormat.Encoding[] {AtracEncoding.ATRAC3, AtracEncoding.ATRAC3PLUS};
+        } else if (sourceFormat.getEncoding() instanceof AtracEncoding) {
             return new AudioFormat.Encoding[] {AudioFormat.Encoding.PCM_SIGNED};
         } else {
             return new AudioFormat.Encoding[0];
@@ -49,7 +49,7 @@ public class Atrac3FormatConversionProvider extends FormatConversionProvider {
     @Override
     public AudioFormat[] getTargetFormats(AudioFormat.Encoding targetEncoding, AudioFormat sourceFormat) {
         if (sourceFormat.getEncoding().equals(AudioFormat.Encoding.PCM_SIGNED) &&
-                targetEncoding instanceof Atrac3Encoding) {
+                targetEncoding instanceof AtracEncoding) {
             if (sourceFormat.getChannels() > 2 ||
                     sourceFormat.getChannels() <= 0 ||
                     sourceFormat.isBigEndian()) {
@@ -65,7 +65,7 @@ public class Atrac3FormatConversionProvider extends FormatConversionProvider {
                                 false)                        // little endian
                 };
             }
-        } else if (sourceFormat.getEncoding() instanceof Atrac3Encoding && targetEncoding.equals(AudioFormat.Encoding.PCM_SIGNED)) {
+        } else if (sourceFormat.getEncoding() instanceof AtracEncoding && targetEncoding.equals(AudioFormat.Encoding.PCM_SIGNED)) {
             return new AudioFormat[] {
                     new AudioFormat(sourceFormat.getSampleRate(),
                             16,           // sample size in bits
@@ -87,13 +87,13 @@ public class Atrac3FormatConversionProvider extends FormatConversionProvider {
                 AudioFormat targetFormat = formats[0];
                 if (sourceFormat.equals(targetFormat)) {
                     return sourceStream;
-                } else if (sourceFormat.getEncoding() instanceof Atrac3Encoding && targetFormat.getEncoding().equals(AudioFormat.Encoding.PCM_SIGNED)) {
+                } else if (sourceFormat.getEncoding() instanceof AtracEncoding && targetFormat.getEncoding().equals(AudioFormat.Encoding.PCM_SIGNED)) {
                     try {
                         return new Atrac3ToPcmAudioInputStream(sourceStream, targetFormat, AudioSystem.NOT_SPECIFIED);
                     } catch (IOException e) {
                         throw new IllegalStateException(e);
                     }
-                } else if (sourceFormat.getEncoding().equals(AudioFormat.Encoding.PCM_SIGNED) && targetFormat.getEncoding() instanceof Atrac3Encoding) {
+                } else if (sourceFormat.getEncoding().equals(AudioFormat.Encoding.PCM_SIGNED) && targetFormat.getEncoding() instanceof AtracEncoding) {
                     throw new IllegalArgumentException("unable to convert " + sourceFormat + " to " + targetFormat);
                 } else {
                     throw new IllegalArgumentException("unable to convert " + sourceFormat + " to " + targetFormat.toString());
@@ -114,14 +114,14 @@ public class Atrac3FormatConversionProvider extends FormatConversionProvider {
                 AudioFormat sourceFormat = sourceStream.getFormat();
                 if (sourceFormat.equals(targetFormat)) {
                     return sourceStream;
-                } else if (sourceFormat.getEncoding() instanceof Atrac3Encoding &&
+                } else if (sourceFormat.getEncoding() instanceof AtracEncoding &&
                         targetFormat.getEncoding().equals(AudioFormat.Encoding.PCM_SIGNED)) {
                     try {
                         return new Atrac3ToPcmAudioInputStream(sourceStream, targetFormat, AudioSystem.NOT_SPECIFIED);
                     } catch (IOException e) {
                         throw new IllegalStateException(e);
                     }
-                } else if (sourceFormat.getEncoding().equals(AudioFormat.Encoding.PCM_SIGNED) && targetFormat.getEncoding() instanceof Atrac3Encoding) {
+                } else if (sourceFormat.getEncoding().equals(AudioFormat.Encoding.PCM_SIGNED) && targetFormat.getEncoding() instanceof AtracEncoding) {
                     throw new IllegalArgumentException("unable to convert " + sourceFormat + " to " + targetFormat);
                 } else {
                     throw new IllegalArgumentException("unable to convert " + sourceFormat + " to " + targetFormat);
