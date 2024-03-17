@@ -156,7 +156,7 @@ public class Atract9FormatBuilder {
         }
 
         @Override
-        public At9Structure readFile(Stream stream, boolean readAudioData/* = true*/) throws IOException {
+        public At9Structure readFile(Stream stream, boolean readAudioData /* = true */) throws IOException {
             var structure = new At9Structure();
             RiffParser parser = new RiffParser();
             parser.readDataChunk = readAudioData;
@@ -784,11 +784,11 @@ Debug.println(Level.FINER, "stream: " + stream.getLength());
 
         Class<TConfig> getConfigurationClass();
 
-        void writeToStream(IAudioFormat audio, Stream stream, TConfig configuration /*= null*/) throws IOException;
+        void writeToStream(IAudioFormat audio, Stream stream, TConfig configuration /* = null */) throws IOException;
 
-        byte[] getFile(IAudioFormat audio, TConfig configuration /*= null*/) throws IOException;
+        byte[] getFile(IAudioFormat audio, TConfig configuration /* = null */) throws IOException;
 
-        void writeToStream(AudioData audio, Stream stream, TConfig configuration /*= null*/) throws IOException;
+        void writeToStream(AudioData audio, Stream stream, TConfig configuration /* = null */) throws IOException;
     }
 
     /** */
@@ -828,7 +828,7 @@ Debug.println(Level.FINER, "stream: " + stream.getLength());
 
         protected abstract void writeStream(Stream stream) throws IOException;
 
-        private byte[] getByteArray(AudioData audio, TConfig configuration /*= null*/) throws IOException {
+        private byte[] getByteArray(AudioData audio, TConfig configuration /* = null */) throws IOException {
             this.configuration = Objects.requireNonNullElse(configuration, getConfiguration());
             setupWriter(audio);
 
@@ -877,7 +877,7 @@ Debug.println(Level.FINER, "stream: " + stream.getLength());
             addFormat(audioFormat);
         }
 
-        public <T extends IAudioFormat> T getFormat(CodecParameters configuration/* = null*/, Class<T> c) {
+        public <T extends IAudioFormat> T getFormat(CodecParameters configuration /* = null */, Class<T> c) {
             var format = getAudioFormat(c);
 
             if (format != null) {

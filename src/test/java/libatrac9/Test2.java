@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.CountDownLatch;
+import java.util.logging.Level;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
@@ -69,7 +70,7 @@ public class Test2 {
     void test1() throws Exception {
 
         byte[] pcm = Atrac9.loadAt9(at9);
-Debug.println("wave\n" + StringUtil.getDump(pcm, 128));
+Debug.println(Level.FINER, "wave\n" + StringUtil.getDump(pcm, 128));
 
         Path out = tmp.resolve("out.wav");
         Files.write(out, pcm);
@@ -78,7 +79,7 @@ Debug.println("wave\n" + StringUtil.getDump(pcm, 128));
         Clip clip = AudioSystem.getClip();
         CountDownLatch cdl = new CountDownLatch(1);
         clip.addLineListener(e -> {
-            Debug.println(e.getType());
+Debug.println(e.getType());
             if (e.getType() == LineEvent.Type.STOP) cdl.countDown();
         });
         clip.open(ais);
