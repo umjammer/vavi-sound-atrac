@@ -108,7 +108,7 @@ public class BitBuffer implements IBitReader {
 
 	@Override
 	public int getReadAddr() {
-		return getBitsRead() >>> 3;
+		return getBitsRead() >> 3;
 	}
 
 	@Override

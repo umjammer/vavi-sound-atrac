@@ -548,9 +548,9 @@ log.finer("snd.numComponents: " + snd.numComponents);
 
         // calculate number of used MLT/QMF bands according to the amount of coded
         // spectral lines
-        int numBands = (subband_tab[numSubbands] - 1) >>> 8;
+        int numBands = (subband_tab[numSubbands] - 1) >> 8;
         if (lastTonal >= 0) {
-            numBands = max((lastTonal + 256) >>> 8, numBands);
+            numBands = max((lastTonal + 256) >> 8, numBands);
         }
 
         // Reconstruct time domain samples

@@ -126,6 +126,6 @@ logger.finer("limit: " + (outputAddr + numberOfSamples * outputChannels));
 
 	public static int signExtend(int value, int bits) {
 		int shift = Integer.SIZE - bits;
-		return (value << shift) >>> shift;
+		return (value << shift) >> shift;
 	}
 }

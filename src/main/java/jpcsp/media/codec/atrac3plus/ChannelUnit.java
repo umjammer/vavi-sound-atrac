@@ -820,7 +820,7 @@ log.finer("decodeTonesInfo: " + ret);
 
                         out[outOffset + pos] = cf;
                         pos++;
-                        val >>>= bits;
+                        val >>= bits;
                     }
                 }
             } else {
