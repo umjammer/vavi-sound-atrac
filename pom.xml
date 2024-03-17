@@ -4,8 +4,8 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>vavi</groupId>
-  <artifactId>vavi-sound-atrac3plus</artifactId>
   <version>0.0.1</version>
+  <artifactId>vavi-sound-atrac</artifactId>
 
   <build>
     <plugins>
@@ -20,10 +20,11 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.0.0</version>
+        <version>3.2.2</version>
         <configuration>
           <argLine>
             -Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties
+            -Dvavi.test.volume=0.02
           </argLine>
           <trimStackTrace>false</trimStackTrace>
         </configuration>
@@ -43,7 +44,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>5.9.3</version>
+        <version>5.10.1</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -52,9 +53,9 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.github.umjammer</groupId>
+      <groupId>com.github.umjammer</groupId> <!-- vavi / com.github.umjammer -->
       <artifactId>vavi-commons</artifactId>
-      <version>1.1.9</version>
+      <version>1.1.10</version>
     </dependency>
 
     <dependency>
@@ -92,6 +93,12 @@
           <groupId>com.github.umjammer</groupId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.github.umjammer</groupId> <!-- moe.yo3explorer / com.github.umjammer -->
+      <artifactId>dotnet4j</artifactId>
+      <version>1.2.3</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>
