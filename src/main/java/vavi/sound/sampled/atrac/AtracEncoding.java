@@ -39,5 +39,3 @@ public class AtracEncoding extends AudioFormat.Encoding {
         this.magic = magic;
     }
 }
-
-/* */

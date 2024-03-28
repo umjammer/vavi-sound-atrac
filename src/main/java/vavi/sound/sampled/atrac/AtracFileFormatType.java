@@ -33,5 +33,3 @@ public class AtracFileFormatType extends AudioFileFormat.Type {
         super(name, extension);
     }
 }
-
-/* */

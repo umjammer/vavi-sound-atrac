@@ -139,5 +139,3 @@ Debug.println(Level.FINER, "position: " + out.position() + ", limit: " + out.lim
         line.close();
     }
 }
-
-/* */

@@ -180,5 +180,3 @@ Debug.printf(Level.WARNING, "Frame #%d, result 0x%X, expected 0x%X", frameNbr, r
         }
     }
 }
-
-/* */

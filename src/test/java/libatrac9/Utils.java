@@ -54,8 +54,8 @@ Debug.println(Level.FINER, " sub array: index[" + i  + "]: length: " + lengths[i
         return array;
     }
 
-    public static String readUTF8String(Object stream, int legth) throws IOException {
-        byte[] array = ((BinaryReader) stream).readBytes(legth - 1 + 1);
+    public static String readUTF8String(Object stream, int length) throws IOException {
+        byte[] array = ((BinaryReader) stream).readBytes(length - 1 + 1);
         return new String(array);
     }
 

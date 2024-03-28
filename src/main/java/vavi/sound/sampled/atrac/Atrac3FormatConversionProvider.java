@@ -134,5 +134,3 @@ public class Atrac3FormatConversionProvider extends FormatConversionProvider {
         }
     }
 }
-
-/* */
