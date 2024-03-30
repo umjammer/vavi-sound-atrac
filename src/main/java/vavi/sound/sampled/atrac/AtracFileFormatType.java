@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.sound.sampled.atrac3;
+package vavi.sound.sampled.atrac;
 
 import javax.sound.sampled.AudioFileFormat;
 
@@ -15,12 +15,13 @@ import javax.sound.sampled.AudioFileFormat;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 231008 nsano initial version <br>
  */
-public class Atrac3FileFormatType extends AudioFileFormat.Type {
+public class AtracFileFormatType extends AudioFileFormat.Type {
 
     /**
      * Specifies an ATRAC (RIFF/WAVE) file.
      */
-    public static final AudioFileFormat.Type ATRAC = new Atrac3FileFormatType("ATRAC3", "at3");
+    public static final AudioFileFormat.Type ATRAC = new AtracFileFormatType("ATRAC3", "at3");
+    public static final AudioFileFormat.Type ATRAC9 = new AtracFileFormatType("ATRAC Advanced Lossless", "at9");
 
     /**
      * Constructs a file type.
@@ -28,9 +29,7 @@ public class Atrac3FileFormatType extends AudioFileFormat.Type {
      * @param name      the name of the ATRAC File Format.
      * @param extension the file extension for this ATRAC File Format.
      */
-    public Atrac3FileFormatType(String name, String extension) {
+    public AtracFileFormatType(String name, String extension) {
         super(name, extension);
     }
 }
-
-/* */

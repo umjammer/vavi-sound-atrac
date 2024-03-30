@@ -32,13 +32,13 @@ import static vavix.util.DelayedWorker.later;
 
 
 /**
- * Test1.
+ * TestCase.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 231008 nsano initial version <br>
  */
 @PropsEntity(url = "file:local.properties")
-class Test1 {
+class TestCase {
 
     static boolean localPropertiesExists() {
         return Files.exists(Paths.get("local.properties"));
@@ -62,6 +62,7 @@ class Test1 {
         volume = Double.parseDouble(System.getProperty("vavi.test.volume",  "0.2"));
     }
 
+    // TODO got error
     @Test
     @EnabledIfSystemProperty(named = "vavi.test", matches = "ide")
     void test1() throws Exception {
@@ -138,5 +139,3 @@ Debug.println(Level.FINER, "position: " + out.position() + ", limit: " + out.lim
         line.close();
     }
 }
-
-/* */

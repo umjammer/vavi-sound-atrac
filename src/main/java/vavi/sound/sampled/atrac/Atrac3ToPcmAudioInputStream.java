@@ -4,21 +4,16 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.sound.sampled.atrac3;
+package vavi.sound.sampled.atrac;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.logging.Level;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.DataLine;
-import javax.sound.sampled.SourceDataLine;
 
 import jpcsp.media.codec.ICodec;
 import jpcsp.media.codec.atrac3.Atrac3Decoder;
@@ -98,8 +93,8 @@ Debug.printf(Level.FINER, "@CHUNK: %c%c%c%c, offset: %d, length: %d", m[0], m[1]
                     switch (chunkMagic) {
                     case FMT_CHUNK_MAGIC:
                         codecType = switch (ByteUtil.readLeShort(inBuf, inputAddr + scanOffset) & 0xffff) {
-                            case Atrac3Encoding.AT3_PLUS_MAGIC -> PSP_CODEC_AT3PLUS;
-                            case Atrac3Encoding.AT3_MAGIC -> PSP_CODEC_AT3;
+                            case AtracEncoding.WAVE_FORMAT_EXTENSIBLE -> PSP_CODEC_AT3PLUS;
+                            case AtracEncoding.AT3_MAGIC -> PSP_CODEC_AT3;
                             default -> codecType;
                         };
                         channels = ByteUtil.readLeShort(inBuf, inputAddr + scanOffset + 2);
@@ -185,5 +180,3 @@ Debug.printf(Level.WARNING, "Frame #%d, result 0x%X, expected 0x%X", frameNbr, r
         }
     }
 }
-
-/* */

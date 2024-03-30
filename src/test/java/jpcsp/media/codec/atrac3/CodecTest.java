@@ -171,7 +171,7 @@ Debug.println("inputAddr: " + inputAddr);
             length -= consumedBytes;
 
             byte[] bytes = new byte[codec.getNumberOfSamples() * 2 * channels];
-Debug.println(Level.FINER, "out: " + bytes.length);
+Debug.println(Level.FINEST, "out: " + bytes.length);
             for (int i = 0; i < bytes.length; i++) {
                 bytes[i] = out.get(i);
             }

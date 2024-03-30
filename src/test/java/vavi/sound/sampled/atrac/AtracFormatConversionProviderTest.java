@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.sound.sampled.atrac3;
+package vavi.sound.sampled.atrac;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -22,14 +22,12 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineEvent;
 import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
-import javax.sound.sampled.spi.AudioFileReader;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import vavi.sound.SoundUtil;
 import vavi.util.Debug;
-import vavi.util.StringUtil;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
@@ -41,13 +39,13 @@ import static vavix.util.DelayedWorker.later;
 
 
 /**
- * Atrac3FormatConversionProviderTest.
+ * AtracFormatConversionProviderTest.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2023/10/13 umjammer initial version <br>
  */
 @PropsEntity(url = "file:local.properties")
-class Atrac3FormatConversionProviderTest {
+class AtracFormatConversionProviderTest {
 
     static boolean localPropertiesExists() {
         return Files.exists(Paths.get("local.properties"));
@@ -73,12 +71,15 @@ class Atrac3FormatConversionProviderTest {
     @Property
     String at3 = "src/test/resources/sample.at3";
 
+    @Property
+    String at9 = "src/test/resources/snd0.at9";
+
     @Test
     @DisplayName("directly")
     void test0() throws Exception {
 
         Path path = Paths.get(at3);
-        AudioInputStream sourceAis = new Atrac3AudioFileReader().getAudioInputStream(new BufferedInputStream(Files.newInputStream(path)));
+        AudioInputStream sourceAis = new AtracAudioFileReader().getAudioInputStream(new BufferedInputStream(Files.newInputStream(path)));
 
         AudioFormat inAudioFormat = sourceAis.getFormat();
 Debug.println("IN: " + inAudioFormat);
@@ -92,7 +93,7 @@ Debug.println("OUT: " + outAudioFormat);
 
         assertTrue(AudioSystem.isConversionSupported(outAudioFormat, inAudioFormat));
 
-        AudioInputStream pcmAis = new Atrac3FormatConversionProvider().getAudioInputStream(outAudioFormat, sourceAis);
+        AudioInputStream pcmAis = new AtracFormatConversionProvider().getAudioInputStream(outAudioFormat, sourceAis);
         DataLine.Info info = new DataLine.Info(SourceDataLine.class, pcmAis.getFormat());
         SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info);
         line.open(pcmAis.getFormat());
@@ -160,7 +161,7 @@ Debug.println("OUT: " + outAudioFormat);
     void test2() throws Exception {
         URL url = Paths.get(at3).toUri().toURL();
         AudioInputStream ais = AudioSystem.getAudioInputStream(url);
-        assertEquals(Atrac3Encoding.ATRAC3PLUS, ais.getFormat().getEncoding());
+        assertEquals(AtracEncoding.ATRAC3PLUS, ais.getFormat().getEncoding());
     }
 
     @Test
@@ -168,13 +169,13 @@ Debug.println("OUT: " + outAudioFormat);
     void test3() throws Exception {
         File file = Paths.get(at3).toFile();
         AudioInputStream ais = AudioSystem.getAudioInputStream(file);
-        assertEquals(Atrac3Encoding.ATRAC3PLUS, ais.getFormat().getEncoding());
+        assertEquals(AtracEncoding.ATRAC3PLUS, ais.getFormat().getEncoding());
     }
 
     @Test
     @DisplayName("when unsupported file coming")
     void test5() throws Exception {
-        InputStream is = Atrac3FormatConversionProviderTest.class.getResourceAsStream("/test.caf");
+        InputStream is = AtracFormatConversionProviderTest.class.getResourceAsStream("/test.caf");
         int available = is.available();
         UnsupportedAudioFileException e = assertThrows(UnsupportedAudioFileException.class, () -> {
 Debug.println(is);
@@ -192,6 +193,7 @@ Debug.println(e.getMessage());
 Debug.println(ais.getFormat());
 
         Clip clip = AudioSystem.getClip();
+Debug.println(clip.getClass().getName());
 CountDownLatch cdl = new CountDownLatch(1);
 clip.addLineListener(ev -> {
  Debug.println(ev.getType());
@@ -199,7 +201,7 @@ clip.addLineListener(ev -> {
   cdl.countDown();
 });
         clip.open(AudioSystem.getAudioInputStream(new AudioFormat(44100, 16, 2, true, false), ais));
-SoundUtil.volume(clip, volume);
+volume(clip, volume);
         clip.start();
 if (!System.getProperty("vavi.test", "").equals("ide")) {
  Thread.sleep(10 * 1000);
@@ -212,6 +214,45 @@ if (!System.getProperty("vavi.test", "").equals("ide")) {
         clip.stop();
         clip.close();
     }
-}
 
-/* */
+    @Test
+    @DisplayName("as spi at9")
+    void test6() throws Exception {
+
+        Path path = Paths.get(at9);
+        AudioInputStream sourceAis = AudioSystem.getAudioInputStream(new BufferedInputStream(Files.newInputStream(path)));
+
+        AudioFormat inAudioFormat = sourceAis.getFormat();
+Debug.println("IN: " + inAudioFormat);
+        AudioFormat outAudioFormat = new AudioFormat(
+                inAudioFormat.getSampleRate(),
+                16,
+                inAudioFormat.getChannels(),
+                true,
+                false);
+Debug.println("OUT: " + outAudioFormat);
+
+        assertTrue(AudioSystem.isConversionSupported(outAudioFormat, inAudioFormat));
+
+        AudioInputStream pcmAis = AudioSystem.getAudioInputStream(outAudioFormat, sourceAis);
+        DataLine.Info info = new DataLine.Info(SourceDataLine.class, pcmAis.getFormat());
+        SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info);
+        line.open(pcmAis.getFormat());
+        line.addLineListener(ev -> Debug.println(ev.getType()));
+        line.start();
+
+        volume(line, volume);
+
+        byte[] buf = new byte[1024];
+        while (!later(time).come()) {
+            int r = pcmAis.read(buf, 0, 1024);
+            if (r < 0) {
+                break;
+            }
+            line.write(buf, 0, r);
+        }
+        line.drain();
+        line.stop();
+        line.close();
+    }
+}
