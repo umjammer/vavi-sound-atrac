@@ -4,8 +4,8 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>vavi</groupId>
-  <version>0.0.1</version>
   <artifactId>vavi-sound-atrac</artifactId>
+  <version>0.0.2</version>
 
   <properties>
     <vavi.test.volume>0.02</vavi.test.volume>
