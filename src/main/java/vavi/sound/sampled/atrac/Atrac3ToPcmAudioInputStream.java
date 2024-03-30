@@ -93,7 +93,7 @@ Debug.printf(Level.FINER, "@CHUNK: %c%c%c%c, offset: %d, length: %d", m[0], m[1]
                     switch (chunkMagic) {
                     case FMT_CHUNK_MAGIC:
                         codecType = switch (ByteUtil.readLeShort(inBuf, inputAddr + scanOffset) & 0xffff) {
-                            case AtracEncoding.AT3_PLUS_MAGIC -> PSP_CODEC_AT3PLUS;
+                            case AtracEncoding.WAVE_FORMAT_EXTENSIBLE -> PSP_CODEC_AT3PLUS;
                             case AtracEncoding.AT3_MAGIC -> PSP_CODEC_AT3;
                             default -> codecType;
                         };
