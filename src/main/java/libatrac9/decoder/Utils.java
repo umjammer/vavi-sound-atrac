@@ -55,10 +55,9 @@ Debug.println(Level.FINER, " sub array: index[" + i  + "]: length: " + lengths[i
         return array;
     }
 
-    public static byte[] shortToInterleavedByte(short[][] input) {
+    public static byte[] shortToInterleavedByte(short[][] input, byte[] output) {
         int inputCount = input.length;
         int length = input[0].length;
-        var output = new byte[inputCount * length * 2];
 
         for (int i = 0; i < length; i++) {
             for (int j = 0; j < inputCount; j++) {
