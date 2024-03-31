@@ -125,8 +125,6 @@ Debug.println(Level.FINER, "no smpl chunk");
             lastOutputInterleaveSize = outputSize - (outBlockCount - 1) * interleaveSize;
             blocksToCopy = Math.min(inBlockCount, outBlockCount);
 
-            output = new byte[outputSize];
-
             pcmBuffer = createJaggedArray(short[][].class, config.getChannelCount(), config.getSuperframeSamples());
 Debug.println(Level.FINER, "array: pcmBuffer, " + pcmBuffer.length + " x " + pcmBuffer[0].length);
         }
@@ -150,6 +148,7 @@ Debug.println(Level.FINER, "array: pcmBuffer, " + pcmBuffer.length + " x " + pcm
 
         private int b = 0;
         byte[] output;
+        byte[] pcm;
 
         short[][] pcmBuffer;
 
@@ -166,16 +165,18 @@ Debug.println(Level.FINER, "array: pcmBuffer, " + pcmBuffer.length + " x " + pcm
                     for (int o = 0; o < outputCount; o++) {
                         int l = Math.min(bytesToCopy, in.available());
                         if (l > 0) {
+                            if (output == null) output = new byte[bytesToCopy];
                             in.readFully(output, 0, l);
                             if (bytesToCopy < currentInputInterleaveSize) {
                                 in.skipBytes(currentInputInterleaveSize - bytesToCopy);
                             }
 
-                            decoder.decode(Arrays.copyOfRange(output, 0, l), pcmBuffer);
+                            decoder.decode(l < bytesToCopy ? Arrays.copyOfRange(output, 0, l) : output, pcmBuffer);
 
                             // TODO structure.encoderDelay, see Atract9FormatBuilder.Atrac9Format#copyBuffer()
-                            byte[] audioData = shortToInterleavedByte(pcmBuffer);
-                            out.write(audioData, 0, audioData.length);
+                            if (pcm == null) pcm = new byte[pcmBuffer.length * pcmBuffer[0].length * 2];
+                            byte[] audioData = shortToInterleavedByte(pcmBuffer, pcm);
+                            out.write(audioData, 0, pcmBuffer.length * pcmBuffer[0].length * 2);
                         }
                     }
                 } else {

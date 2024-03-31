@@ -17,7 +17,7 @@ Pure Java ATRAC3plus decoder (Java Sound SPI) powered by [Jpcsp](https://github.
 ## Usage
 
 ```java
-    AudioInputStream ais = AudioSystem.getAudioInputStream(Files.newInputStream(Paths.get("foo.at3")));
+    AudioInputStream ais = AudioSystem.getAudioInputStream(Paths.get("foo.at3").toFile());
     Clip clip = AudioSystem.getClip();
     clip.open(AudioSystem.getAudioInputStream(new AudioFormat(44100, 16, 2, true, false), ais));
     clip.loop(Clip.LOOP_CONTINUOUSLY);
@@ -39,6 +39,6 @@ Pure Java ATRAC3plus decoder (Java Sound SPI) powered by [Jpcsp](https://github.
 
  * ~~spi~~
  * file extension is `aa3`?
- * atrac9
+ * ~~atrac9~~
  * ~~project name vavi-sound-atrac3plus -> vavi-sound-atrac~~
  * ~~package name vavi.sound.sampled.atrac -> vavi.sound.sampled.atrac~~ 
