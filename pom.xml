@@ -5,7 +5,7 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-sound-atrac</artifactId>
-  <version>0.0.2</version>
+  <version>0.0.3</version>
 
   <properties>
     <vavi.test.volume>0.02</vavi.test.volume>
