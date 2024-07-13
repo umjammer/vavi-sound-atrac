@@ -29,14 +29,14 @@ public class WaveSynthParams {
     /** < number of PQF bands with tones */
     int numToneBands;
     /** < 1 - subband-wise tone sharing flags */
-    boolean[] toneSharing = new boolean[ATRAC3P_SUBBANDS];
+    final boolean[] toneSharing = new boolean[ATRAC3P_SUBBANDS];
     /** < 1 - subband-wise tone channel swapping */
-    boolean[] toneMaster = new boolean[ATRAC3P_SUBBANDS];
+    final boolean[] toneMaster = new boolean[ATRAC3P_SUBBANDS];
     /** < 1 - subband-wise 180 degrees phase shifting */
-    boolean[] phaseShift = new boolean[ATRAC3P_SUBBANDS];
+    final boolean[] phaseShift = new boolean[ATRAC3P_SUBBANDS];
     /** < total sum of tones in this unit */
     int tonesIndex;
-    WaveParam[] waves = new WaveParam[48];
+    final WaveParam[] waves = new WaveParam[48];
 
     public WaveSynthParams() {
         for (int i = 0; i < waves.length; i++) {

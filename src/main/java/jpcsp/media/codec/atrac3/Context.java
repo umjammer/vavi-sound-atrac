@@ -26,20 +26,20 @@ public class Context {
 
     public BitReader br;
     public int codingMode;
-    public ChannelUnit[] units = new ChannelUnit[2];
+    public final ChannelUnit[] units = new ChannelUnit[2];
     public int channels;
     public int outputChannels;
     public int blockAlign;
     // joint-stereo related variables
-    int[] matrixCoeffIndexPrev = new int[4];
-    int[] matrixCoeffIndexNow = new int[4];
-    int[] matrixCoeffIndexNext = new int[4];
-    int[] weightingDelay = new int[6];
+    final int[] matrixCoeffIndexPrev = new int[4];
+    final int[] matrixCoeffIndexNow = new int[4];
+    final int[] matrixCoeffIndexNext = new int[4];
+    final int[] weightingDelay = new int[6];
     // data buffers
-    public float[] tempBuf = new float[1070];
+    public final float[] tempBuf = new float[1070];
 
     public Atrac gaincCtx;
     public FFT mdctCtx;
 
-    public float[][] samples = new float[2][Atrac3Decoder.SAMPLES_PER_FRAME];
+    public final float[][] samples = new float[2][Atrac3Decoder.SAMPLES_PER_FRAME];
 }

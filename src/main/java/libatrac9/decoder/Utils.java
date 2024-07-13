@@ -5,14 +5,9 @@
 package libatrac9.decoder;
 
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.lang.reflect.Array;
-import java.util.Arrays;
 import java.util.logging.Level;
 
-import vavi.io.LittleEndianDataInputStream;
-import vavi.io.LittleEndianDataOutputStream;
 import vavi.util.Debug;
 
 
@@ -41,14 +36,14 @@ public class Utils {
     }
 
     private static Object initializeJaggedArray(Class<?> type, int index, int... lengths) {
-Debug.println(Level.FINER, "array: " + type + ", length: " + lengths[index]);
+        Debug.println(Level.FINER, "array: " + type + ", length: " + lengths[index]);
         Object array = Array.newInstance(type, lengths[index]);
 
         if (!type.isArray()) return array;
         Class<?> elementType = type.getComponentType();
 
         for (int i = 0; i < lengths[index]; i++) {
-Debug.println(Level.FINER, " sub array: index[" + i  + "]: length: " + lengths[index + 1]);
+            Debug.println(Level.FINER, " sub array: index[" + i + "]: length: " + lengths[index + 1]);
             Array.set(array, i, initializeJaggedArray(elementType, index + 1, lengths));
         }
 

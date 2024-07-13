@@ -56,83 +56,83 @@ class BandExtension {
         fillHighFrequencies(spectra, groupABin, groupBBin, groupCBin, totalBins);
 
         switch (channel.getBexMode()) {
-        case 0:
-            int bexQuantUnits = totalUnits - groupAUnit;
+            case 0:
+                int bexQuantUnits = totalUnits - groupAUnit;
 
-            switch (bandCount[0]) {
+                switch (bandCount[0]) {
+                    case 3:
+                        scales[0] = BexMode0Bands3[0][values[0]];
+                        scales[1] = BexMode0Bands3[1][values[0]];
+                        scales[2] = BexMode0Bands3[2][values[1]];
+                        scales[3] = BexMode0Bands3[3][values[2]];
+                        scales[4] = BexMode0Bands3[4][values[3]];
+                        break;
+                    case 4:
+                        scales[0] = BexMode0Bands4[0][values[0]];
+                        scales[1] = BexMode0Bands4[1][values[0]];
+                        scales[2] = BexMode0Bands4[2][values[1]];
+                        scales[3] = BexMode0Bands4[3][values[2]];
+                        scales[4] = BexMode0Bands4[4][values[3]];
+                        break;
+                    case 5:
+                        scales[0] = BexMode0Bands5[0][values[0]];
+                        scales[1] = BexMode0Bands5[1][values[1]];
+                        scales[2] = BexMode0Bands5[2][values[1]];
+                        break;
+                }
+
+                scales[bexQuantUnits - 1] = Tables.SpectrumScale[scaleFactors[groupAUnit]];
+
+                addNoiseToSpectrum(channel, Tables.QuantUnitToCoeffIndex[totalUnits - 1],
+                        Tables.QuantUnitToCoeffCount[totalUnits - 1]);
+                scaleBexQuantUnits(spectra, scales, groupAUnit, totalUnits);
+                break;
+            case 1:
+                for (int i = groupAUnit; i < totalUnits; i++) {
+                    scales[i - groupAUnit] = Tables.SpectrumScale[scaleFactors[i]];
+                }
+
+                addNoiseToSpectrum(channel, groupABin, totalBins - groupABin);
+                scaleBexQuantUnits(spectra, scales, groupAUnit, totalUnits);
+                break;
+            case 2:
+                double groupAScale2 = BexMode2Scale[values[0]];
+                double groupBScale2 = BexMode2Scale[values[1]];
+
+                for (int i = groupABin; i < groupBBin; i++) {
+                    spectra[i] *= groupAScale2;
+                }
+
+                for (int i = groupBBin; i < groupCBin; i++) {
+                    spectra[i] *= groupBScale2;
+                }
+                break;
             case 3:
-                scales[0] = BexMode0Bands3[0][values[0]];
-                scales[1] = BexMode0Bands3[1][values[0]];
-                scales[2] = BexMode0Bands3[2][values[1]];
-                scales[3] = BexMode0Bands3[3][values[2]];
-                scales[4] = BexMode0Bands3[4][values[3]];
+                double rate = Math.pow(2, BexMode3Rate[values[1]]);
+                double scale = BexMode3Initial[values[0]];
+                for (int i = groupABin; i < totalBins; i++) {
+                    scale *= rate;
+                    spectra[i] *= scale;
+                }
                 break;
             case 4:
-                scales[0] = BexMode0Bands4[0][values[0]];
-                scales[1] = BexMode0Bands4[1][values[0]];
-                scales[2] = BexMode0Bands4[2][values[1]];
-                scales[3] = BexMode0Bands4[3][values[2]];
-                scales[4] = BexMode0Bands4[4][values[3]];
+                double mult = BexMode4Multiplier[values[0]];
+                double groupAScale4 = 0.7079468 * mult;
+                double groupBScale4 = 0.5011902 * mult;
+                double groupCScale4 = 0.3548279 * mult;
+
+                for (int i = groupABin; i < groupBBin; i++) {
+                    spectra[i] *= groupAScale4;
+                }
+
+                for (int i = groupBBin; i < groupCBin; i++) {
+                    spectra[i] *= groupBScale4;
+                }
+
+                for (int i = groupCBin; i < totalBins; i++) {
+                    spectra[i] *= groupCScale4;
+                }
                 break;
-            case 5:
-                scales[0] = BexMode0Bands5[0][values[0]];
-                scales[1] = BexMode0Bands5[1][values[1]];
-                scales[2] = BexMode0Bands5[2][values[1]];
-                break;
-            }
-
-            scales[bexQuantUnits - 1] = Tables.SpectrumScale[scaleFactors[groupAUnit]];
-
-            addNoiseToSpectrum(channel, Tables.QuantUnitToCoeffIndex[totalUnits - 1],
-                    Tables.QuantUnitToCoeffCount[totalUnits - 1]);
-            scaleBexQuantUnits(spectra, scales, groupAUnit, totalUnits);
-            break;
-        case 1:
-            for (int i = groupAUnit; i < totalUnits; i++) {
-                scales[i - groupAUnit] = Tables.SpectrumScale[scaleFactors[i]];
-            }
-
-            addNoiseToSpectrum(channel, groupABin, totalBins - groupABin);
-            scaleBexQuantUnits(spectra, scales, groupAUnit, totalUnits);
-            break;
-        case 2:
-            double groupAScale2 = BexMode2Scale[values[0]];
-            double groupBScale2 = BexMode2Scale[values[1]];
-
-            for (int i = groupABin; i < groupBBin; i++) {
-                spectra[i] *= groupAScale2;
-            }
-
-            for (int i = groupBBin; i < groupCBin; i++) {
-                spectra[i] *= groupBScale2;
-            }
-            return;
-        case 3:
-            double rate = Math.pow(2, BexMode3Rate[values[1]]);
-            double scale = BexMode3Initial[values[0]];
-            for (int i = groupABin; i < totalBins; i++) {
-                scale *= rate;
-                spectra[i] *= scale;
-            }
-            return;
-        case 4:
-            double mult = BexMode4Multiplier[values[0]];
-            double groupAScale4 = 0.7079468 * mult;
-            double groupBScale4 = 0.5011902 * mult;
-            double groupCScale4 = 0.3548279 * mult;
-
-            for (int i = groupABin; i < groupBBin; i++) {
-                spectra[i] *= groupAScale4;
-            }
-
-            for (int i = groupBBin; i < groupCBin; i++) {
-                spectra[i] *= groupBScale4;
-            }
-
-            for (int i = groupCBin; i < totalBins; i++) {
-                spectra[i] *= groupCScale4;
-            }
-            return;
         }
     }
 
@@ -207,34 +207,34 @@ class BandExtension {
                     new byte[] {4, 4, 3, 4},
                     new byte[] {4, 5, 0, 0}
             }, new byte[][] {
-                    new byte[] {0, 0, 0, 0},
-                    new byte[] {0, 0, 0, 0},
-                    new byte[] {0, 0, 0, 0},
-                    new byte[] {0, 0, 0, 0},
-                    new byte[] {0, 0, 0, 0},
-                    new byte[] {0, 0, 0, 0}
-            }, new byte[][] {
-                    new byte[] {0, 0, 0, 0},
-                    new byte[] {0, 0, 0, 0},
-                    new byte[] {0, 0, 0, 0},
-                    new byte[] {6, 6, 0, 0},
-                    new byte[] {6, 6, 0, 0},
-                    new byte[] {6, 0, 0, 0}
-            }, new byte[][] {
-                    new byte[] {0, 0, 0, 0},
-                    new byte[] {0, 0, 0, 0},
-                    new byte[] {0, 0, 0, 0},
-                    new byte[] {4, 4, 0, 0},
-                    new byte[] {4, 4, 0, 0},
-                    new byte[] {4, 4, 0, 0}
-            }, new byte[][] {
-                    new byte[] {3, 0, 0, 0},
-                    new byte[] {3, 0, 0, 0},
-                    new byte[] {3, 0, 0, 0},
-                    new byte[] {0, 0, 0, 0},
-                    new byte[] {0, 0, 0, 0},
-                    new byte[] {0, 0, 0, 0}
-            }
+            new byte[] {0, 0, 0, 0},
+            new byte[] {0, 0, 0, 0},
+            new byte[] {0, 0, 0, 0},
+            new byte[] {0, 0, 0, 0},
+            new byte[] {0, 0, 0, 0},
+            new byte[] {0, 0, 0, 0}
+    }, new byte[][] {
+            new byte[] {0, 0, 0, 0},
+            new byte[] {0, 0, 0, 0},
+            new byte[] {0, 0, 0, 0},
+            new byte[] {6, 6, 0, 0},
+            new byte[] {6, 6, 0, 0},
+            new byte[] {6, 0, 0, 0}
+    }, new byte[][] {
+            new byte[] {0, 0, 0, 0},
+            new byte[] {0, 0, 0, 0},
+            new byte[] {0, 0, 0, 0},
+            new byte[] {4, 4, 0, 0},
+            new byte[] {4, 4, 0, 0},
+            new byte[] {4, 4, 0, 0}
+    }, new byte[][] {
+            new byte[] {3, 0, 0, 0},
+            new byte[] {3, 0, 0, 0},
+            new byte[] {3, 0, 0, 0},
+            new byte[] {0, 0, 0, 0},
+            new byte[] {0, 0, 0, 0},
+            new byte[] {0, 0, 0, 0}
+    }
     };
 
     public static final double[][] BexMode0Bands3 = {
@@ -248,26 +248,26 @@ class BandExtension {
                     9.846191e-1, 9.859314e-1, 9.863586e-1, 9.863892e-1,
                     9.873352e-1, 9.881287e-1, 9.898682e-1, 9.913330e-1
             }, new double[] {
-                    0.000000e+0, 9.982910e-1, 7.592773e-2, 7.179565e-1,
-                    9.851379e-1, 5.340271e-1, 9.013672e-1, 6.349182e-1,
-                    7.226257e-1, 1.948547e-1, 7.628174e-1, 9.873657e-1,
-                    8.112183e-1, 2.715454e-1, 9.734192e-1, 1.443787e-1,
-                    4.640198e-1, 3.249207e-1, 3.790894e-1, 8.276367e-2,
-                    5.954590e-1, 2.864380e-1, 9.806824e-1, 7.929077e-1,
-                    6.292114e-1, 4.887085e-1, 2.905273e-1, 1.301880e-1,
-                    3.140869e-1, 5.482483e-1, 4.210815e-1, 1.182861e-1
-            }, new double[] {
-                    0.000000e+0, 3.155518e-2, 8.581543e-2, 1.364746e-1,
-                    1.858826e-1, 2.368469e-1, 2.888184e-1, 3.432617e-1,
-                    4.012451e-1, 4.623108e-1, 5.271301e-1, 5.954895e-1,
-                    6.681213e-1, 7.448425e-1, 8.245239e-1, 9.097290e-1
-            }, new double[] {
-                    0.000000e+0, 4.418945e-2, 1.303711e-1, 2.273560e-1,
-                    3.395996e-1, 4.735718e-1, 6.267090e-1, 8.003845e-1
-            }, new double[] {
-                    0.000000e+0, 2.804565e-2, 9.683228e-2, 1.849976e-1,
-                    3.005981e-1, 4.470520e-1, 6.168518e-1, 8.007813e-1
-            }
+            0.000000e+0, 9.982910e-1, 7.592773e-2, 7.179565e-1,
+            9.851379e-1, 5.340271e-1, 9.013672e-1, 6.349182e-1,
+            7.226257e-1, 1.948547e-1, 7.628174e-1, 9.873657e-1,
+            8.112183e-1, 2.715454e-1, 9.734192e-1, 1.443787e-1,
+            4.640198e-1, 3.249207e-1, 3.790894e-1, 8.276367e-2,
+            5.954590e-1, 2.864380e-1, 9.806824e-1, 7.929077e-1,
+            6.292114e-1, 4.887085e-1, 2.905273e-1, 1.301880e-1,
+            3.140869e-1, 5.482483e-1, 4.210815e-1, 1.182861e-1
+    }, new double[] {
+            0.000000e+0, 3.155518e-2, 8.581543e-2, 1.364746e-1,
+            1.858826e-1, 2.368469e-1, 2.888184e-1, 3.432617e-1,
+            4.012451e-1, 4.623108e-1, 5.271301e-1, 5.954895e-1,
+            6.681213e-1, 7.448425e-1, 8.245239e-1, 9.097290e-1
+    }, new double[] {
+            0.000000e+0, 4.418945e-2, 1.303711e-1, 2.273560e-1,
+            3.395996e-1, 4.735718e-1, 6.267090e-1, 8.003845e-1
+    }, new double[] {
+            0.000000e+0, 2.804565e-2, 9.683228e-2, 1.849976e-1,
+            3.005981e-1, 4.470520e-1, 6.168518e-1, 8.007813e-1
+    }
     };
 
     public static final double[][] BexMode0Bands4 = {
@@ -277,24 +277,24 @@ class BandExtension {
                     7.276917e-1, 7.595520e-1, 7.878723e-1, 9.707336e-1,
                     9.713135e-1, 9.736023e-1, 9.759827e-1, 9.832458e-1
             }, new double[] {
-                    0.000000e+0, 2.330627e-1, 5.891418e-1, 7.170410e-1,
-                    2.036438e-1, 1.613464e-1, 6.668701e-1, 9.481201e-1,
-                    9.769897e-1, 5.111694e-1, 3.522644e-1, 8.209534e-1,
-                    2.933960e-1, 9.757690e-1, 5.289917e-1, 4.372253e-1
-            }, new double[] {
-                    0.000000e+0, 4.360962e-2, 1.056519e-1, 1.590576e-1,
-                    2.078857e-1, 2.572937e-1, 3.082581e-1, 3.616028e-1,
-                    4.191589e-1, 4.792175e-1, 5.438538e-1, 6.125183e-1,
-                    6.841125e-1, 7.589417e-1, 8.365173e-1, 9.148254e-1
-            }, new double[] {
-                    0.000000e+0, 4.074097e-2, 1.164551e-1, 2.077026e-1,
-                    3.184509e-1, 4.532166e-1, 6.124268e-1, 7.932129e-1
-            }, new double[] {
-                    0.000000e+0, 8.880615e-3, 2.932739e-2, 5.593872e-2,
-                    8.825684e-2, 1.259155e-1, 1.721497e-1, 2.270813e-1,
-                    2.901611e-1, 3.579712e-1, 4.334106e-1, 5.147095e-1,
-                    6.023254e-1, 6.956177e-1, 7.952881e-1, 8.977356e-1
-            }
+            0.000000e+0, 2.330627e-1, 5.891418e-1, 7.170410e-1,
+            2.036438e-1, 1.613464e-1, 6.668701e-1, 9.481201e-1,
+            9.769897e-1, 5.111694e-1, 3.522644e-1, 8.209534e-1,
+            2.933960e-1, 9.757690e-1, 5.289917e-1, 4.372253e-1
+    }, new double[] {
+            0.000000e+0, 4.360962e-2, 1.056519e-1, 1.590576e-1,
+            2.078857e-1, 2.572937e-1, 3.082581e-1, 3.616028e-1,
+            4.191589e-1, 4.792175e-1, 5.438538e-1, 6.125183e-1,
+            6.841125e-1, 7.589417e-1, 8.365173e-1, 9.148254e-1
+    }, new double[] {
+            0.000000e+0, 4.074097e-2, 1.164551e-1, 2.077026e-1,
+            3.184509e-1, 4.532166e-1, 6.124268e-1, 7.932129e-1
+    }, new double[] {
+            0.000000e+0, 8.880615e-3, 2.932739e-2, 5.593872e-2,
+            8.825684e-2, 1.259155e-1, 1.721497e-1, 2.270813e-1,
+            2.901611e-1, 3.579712e-1, 4.334106e-1, 5.147095e-1,
+            6.023254e-1, 6.956177e-1, 7.952881e-1, 8.977356e-1
+    }
     };
 
     public static final double[][] BexMode0Bands5 = {
@@ -304,24 +304,24 @@ class BandExtension {
                     5.703125e-1, 6.237488e-1, 6.763611e-1, 7.288208e-1,
                     7.808533e-1, 8.337708e-1, 8.874512e-1, 9.418030e-1
             }, new double[] {
-                    0.000000e+0, 7.980347e-2, 1.615295e-1, 1.665649e-1,
-                    1.822205e-1, 2.185669e-1, 2.292175e-1, 2.456665e-1,
-                    2.666321e-1, 3.306580e-1, 3.330688e-1, 3.765259e-1,
-                    4.085083e-1, 4.400024e-1, 4.407654e-1, 4.817505e-1,
-                    4.924011e-1, 5.320740e-1, 5.893860e-1, 6.131287e-1,
-                    6.212463e-1, 6.278076e-1, 6.308899e-1, 7.660828e-1,
-                    7.850647e-1, 7.910461e-1, 7.929382e-1, 8.038330e-1,
-                    9.834900e-1, 9.846191e-1, 9.852295e-1, 9.862671e-1
-            }, new double[] {
-                    0.000000e+0, 6.084290e-1, 3.672791e-1, 3.151855e-1,
-                    1.488953e-1, 2.571716e-1, 5.103455e-1, 3.311157e-1,
-                    5.426025e-2, 4.254456e-1, 7.998352e-1, 7.873230e-1,
-                    5.418701e-1, 2.925110e-1, 8.468628e-2, 1.410522e-1,
-                    9.819641e-1, 9.609070e-1, 3.530884e-2, 9.729004e-2,
-                    5.758362e-1, 9.941711e-1, 7.215576e-1, 7.183228e-1,
-                    2.028809e-1, 9.588623e-2, 2.032166e-1, 1.338806e-1,
-                    5.003357e-1, 1.874390e-1, 9.804993e-1, 1.107788e-1
-            }
+            0.000000e+0, 7.980347e-2, 1.615295e-1, 1.665649e-1,
+            1.822205e-1, 2.185669e-1, 2.292175e-1, 2.456665e-1,
+            2.666321e-1, 3.306580e-1, 3.330688e-1, 3.765259e-1,
+            4.085083e-1, 4.400024e-1, 4.407654e-1, 4.817505e-1,
+            4.924011e-1, 5.320740e-1, 5.893860e-1, 6.131287e-1,
+            6.212463e-1, 6.278076e-1, 6.308899e-1, 7.660828e-1,
+            7.850647e-1, 7.910461e-1, 7.929382e-1, 8.038330e-1,
+            9.834900e-1, 9.846191e-1, 9.852295e-1, 9.862671e-1
+    }, new double[] {
+            0.000000e+0, 6.084290e-1, 3.672791e-1, 3.151855e-1,
+            1.488953e-1, 2.571716e-1, 5.103455e-1, 3.311157e-1,
+            5.426025e-2, 4.254456e-1, 7.998352e-1, 7.873230e-1,
+            5.418701e-1, 2.925110e-1, 8.468628e-2, 1.410522e-1,
+            9.819641e-1, 9.609070e-1, 3.530884e-2, 9.729004e-2,
+            5.758362e-1, 9.941711e-1, 7.215576e-1, 7.183228e-1,
+            2.028809e-1, 9.588623e-2, 2.032166e-1, 1.338806e-1,
+            5.003357e-1, 1.874390e-1, 9.804993e-1, 1.107788e-1
+    }
     };
 
     public static final double[] BexMode2Scale = {

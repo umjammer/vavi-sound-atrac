@@ -22,18 +22,18 @@ public class ChannelUnit {
 
     public int bandsCoded;
     public int numComponents;
-    public float[] prevFrame = new float[Atrac3Decoder.SAMPLES_PER_FRAME];
+    public final float[] prevFrame = new float[Atrac3Decoder.SAMPLES_PER_FRAME];
     public int gcBlkSwitch;
-    public TonalComponent[] components = new TonalComponent[64];
-    public GainBlock[] gainBlock = new GainBlock[2];
+    public final TonalComponent[] components = new TonalComponent[64];
+    public final GainBlock[] gainBlock = new GainBlock[2];
 
-    public float[] spectrum = new float[Atrac3Decoder.SAMPLES_PER_FRAME];
-    public float[] imdctBuf = new float[Atrac3Decoder.SAMPLES_PER_FRAME];
+    public final float[] spectrum = new float[Atrac3Decoder.SAMPLES_PER_FRAME];
+    public final float[] imdctBuf = new float[Atrac3Decoder.SAMPLES_PER_FRAME];
 
     // qmf delay buffers
-    public float[] delayBuf1 = new float[46];
-    public float[] delayBuf2 = new float[46];
-    public float[] delayBuf3 = new float[46];
+    public final float[] delayBuf1 = new float[46];
+    public final float[] delayBuf2 = new float[46];
+    public final float[] delayBuf3 = new float[46];
 
     public ChannelUnit() {
         for (int i = 0; i < components.length; i++) {

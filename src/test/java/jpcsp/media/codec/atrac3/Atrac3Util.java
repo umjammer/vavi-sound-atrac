@@ -4,15 +4,17 @@
 
 package jpcsp.media.codec.atrac3;
 
+import java.lang.System.Logger.Level;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.lang.System.Logger;
+
+import static java.lang.System.getLogger;
 
 
 public class Atrac3Util {
 
-    static Logger log = Logger.getLogger(Atrac3Util.class.getName());
+    static final Logger logger = getLogger(Atrac3Util.class.getName());
 
     public static final int PSP_CODEC_AT3PLUS = 0x00001000;
     public static final int PSP_CODEC_AT3 = 0x00001001;
@@ -58,7 +60,7 @@ public class Atrac3Util {
     public static int analyzeRiffFile(ByteBuffer mem, int addr, int length, AtracFileInfo info) {
         int result = ERROR_ATRAC_UNKNOWN_FORMAT;
 
-log.fine("addr: " + addr);
+logger.log(Level.DEBUG, "addr: " + addr);
         mem.position(addr);
         int bufferSize = length;
         info.atracEndSample = -1;
@@ -66,7 +68,7 @@ log.fine("addr: " + addr);
         info.inputFileDataOffset = 0;
 
         if (bufferSize < 12) {
-            log.severe(String.format("Atrac buffer too small %d", bufferSize));
+            logger.log(Level.ERROR, String.format("Atrac buffer too small %d", bufferSize));
             return ERROR_ATRAC_INVALID_SIZE;
         }
 
@@ -78,13 +80,13 @@ log.fine("addr: " + addr);
         info.inputFileSize = mem.getInt() + 8;
         int WAVEMagic = mem.getInt();
         if (magic != RIFF_MAGIC || WAVEMagic != WAVE_MAGIC) {
-log.info("constant RIFF/WAVE format: " + getStringFromInt32(RIFF_MAGIC) + ", " + getStringFromInt32(WAVE_MAGIC));
-log.severe("Not a RIFF/WAVE format: " + getStringFromInt32(magic) + ", " + getStringFromInt32(WAVEMagic));
+logger.log(Level.INFO, "constant RIFF/WAVE format: " + getStringFromInt32(RIFF_MAGIC) + ", " + getStringFromInt32(WAVE_MAGIC));
+logger.log(Level.ERROR, "Not a RIFF/WAVE format: " + getStringFromInt32(magic) + ", " + getStringFromInt32(WAVEMagic));
             return ERROR_ATRAC_UNKNOWN_FORMAT;
         }
 
         info.inputDataSize = info.inputFileSize;
-log.finer(String.format("FileSize %d", info.inputFileSize));
+logger.log(Level.TRACE, String.format("FileSize %d", info.inputFileSize));
         bufferSize -= 12;
 
         boolean foundData = false;
@@ -92,7 +94,7 @@ log.finer(String.format("FileSize %d", info.inputFileSize));
             int chunkMagic = mem.getInt();
             int chunkSize = mem.getInt();
             bufferSize -= 8;
-log.finer("@CHUNK: " + getStringFromInt32(chunkMagic) + ", offset: " + mem.position() + ", length: " + chunkSize);
+logger.log(Level.TRACE, "@CHUNK: " + getStringFromInt32(chunkMagic) + ", offset: " + mem.position() + ", length: " + chunkSize);
 
             int currentAddr = mem.position();
 
@@ -102,7 +104,7 @@ log.finer("@CHUNK: " + getStringFromInt32(chunkMagic) + ", offset: " + mem.posit
                 // Offset of the data chunk in the input file
                 info.inputFileDataOffset = mem.position() - addr;
                 info.inputDataSize = chunkSize;
-log.finer(String.format("DATA Chunk: data offset=%d, data size=%d", info.inputFileDataOffset, info.inputDataSize));
+logger.log(Level.TRACE, String.format("DATA Chunk: data offset=%d, data size=%d", info.inputFileDataOffset, info.inputDataSize));
                 break;
             case FMT_CHUNK_MAGIC: {
                 if (chunkSize >= 16) {
@@ -118,8 +120,8 @@ log.finer(String.format("DATA Chunk: data offset=%d, data size=%d", info.inputFi
                         mem.getShort(); // +2
                         info.atracCodingMode = mem.getShort() & 0xffff;
                     }
-if (log.isLoggable(Level.FINER)) {
-    log.finer(String.format("WAVE format: magic=0x%08X('%s'), chunkSize=%d, compressionCode=0x%04X, channels=%d, sampleRate=%d, bitrate=%d, bytesPerFrame=0x%X, hiBytesPerSample=%d, codingMode=%d", chunkMagic, getStringFromInt32(chunkMagic), chunkSize, compressionCode, info.atracChannels, info.atracSampleRate, info.atracBitrate, info.atracBytesPerFrame, hiBytesPerSample, info.atracCodingMode));
+if (logger.isLoggable(Level.TRACE)) {
+    logger.log(Level.TRACE, String.format("WAVE format: magic=0x%08X('%s'), chunkSize=%d, compressionCode=0x%04X, channels=%d, sampleRate=%d, bitrate=%d, bytesPerFrame=0x%X, hiBytesPerSample=%d, codingMode=%d", chunkMagic, getStringFromInt32(chunkMagic), chunkSize, compressionCode, info.atracChannels, info.atracSampleRate, info.atracBitrate, info.atracBytesPerFrame, hiBytesPerSample, info.atracCodingMode));
     // Display rest of chunk as debug information
     StringBuilder restChunk = new StringBuilder();
     for (int i = 16; i < chunkSize; i++) {
@@ -127,7 +129,7 @@ if (log.isLoggable(Level.FINER)) {
         restChunk.append(String.format(" %02X", b));
     }
     if (!restChunk.isEmpty()) {
-        log.finer(String.format("Additional chunk data:%s", restChunk));
+        logger.log(Level.TRACE, String.format("Additional chunk data:%s", restChunk));
     }
 }
 
@@ -154,7 +156,7 @@ if (log.isLoggable(Level.FINER)) {
                     } else {
                         info.atracSampleOffset = mem.getInt(); // The loop samples are offset by this value
                     }
-log.finer(String.format("FACT Chunk: chunkSize=%d, endSample=0x%X, sampleOffset=0x%X", chunkSize, info.atracEndSample, info.atracSampleOffset));
+logger.log(Level.TRACE, String.format("FACT Chunk: chunkSize=%d, endSample=0x%X, sampleOffset=0x%X", chunkSize, info.atracEndSample, info.atracSampleOffset));
                 }
                 break;
             }
@@ -179,7 +181,7 @@ log.finer(String.format("FACT Chunk: chunkSize=%d, endSample=0x%X, sampleOffset=
                             loop.fraction = mem.getInt();
                             loop.playCount = mem.getInt();
 
-log.finer(String.format("Loop #%d: %s", i, loop));
+logger.log(Level.TRACE, String.format("Loop #%d: %s", i, loop));
                             loopInfoAddr += 24;
                         }
                         // TODO Second buffer processing disabled because still incomplete

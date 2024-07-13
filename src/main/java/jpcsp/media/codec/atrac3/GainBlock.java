@@ -22,7 +22,7 @@ import jpcsp.media.codec.atrac3plus.AtracGainInfo;
 
 public class GainBlock {
 
-    public AtracGainInfo[] gBlock = new AtracGainInfo[4];
+    public final AtracGainInfo[] gBlock = new AtracGainInfo[4];
 
     public GainBlock() {
         for (int i = 0; i < gBlock.length; i++) {

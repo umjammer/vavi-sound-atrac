@@ -26,9 +26,9 @@ public class AtracGainInfo {
     /** number of gain control points */
     public int numPoints;
     /** level at corresponding control point */
-    public int[] levCode = new int[7];
+    public final int[] levCode = new int[7];
     /** location of gain control points */
-    public int[] locCode = new int[7];
+    public final int[] locCode = new int[7];
 
     public void clear() {
         numPoints = 0;

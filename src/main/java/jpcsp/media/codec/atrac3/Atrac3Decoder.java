@@ -17,9 +17,10 @@
 
 package jpcsp.media.codec.atrac3;
 
+import java.lang.System.Logger.Level;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.logging.Logger;
+import java.lang.System.Logger;
 
 import jpcsp.media.codec.ICodec;
 import jpcsp.media.codec.atrac3plus.Atrac;
@@ -32,6 +33,7 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.lang.Math.sin;
 import static java.lang.Math.sqrt;
+import static java.lang.System.getLogger;
 import static jpcsp.media.codec.atrac3.Atrac3Data.clc_length_tab;
 import static jpcsp.media.codec.atrac3.Atrac3Data.inv_max_quant;
 import static jpcsp.media.codec.atrac3.Atrac3Data.mantissa_clc_tab;
@@ -49,7 +51,7 @@ import static jpcsp.media.codec.util.FloatDSP.vectorFmul;
  */
 public class Atrac3Decoder implements ICodec {
 
-    public static Logger log = Logger.getLogger(Atrac3Decoder.class.getName());
+    public static final Logger logger = getLogger(Atrac3Decoder.class.getName());
 
     public static final int AT3_ERROR = -2;
     public static final int JOINT_STEREO = 0x12;
@@ -388,7 +390,7 @@ public class Atrac3Decoder implements ICodec {
      * @param components    tonal components for this band
      * @return position of the last tonal coefficient
      */
-    private int addTonalComponents(float[] spectrum, int numComponents, TonalComponent[] components) {
+    private static int addTonalComponents(float[] spectrum, int numComponents, TonalComponent[] components) {
         int lastPos = -1;
         for (int i = 0; i < numComponents; i++) {
             lastPos = max(components[i].pos + components[i].numCoefs, lastPos);
@@ -427,39 +429,39 @@ public class Atrac3Decoder implements ICodec {
 
             // Apply the matrix without interpolation.
             switch (s2) {
-            case 0: // M/S decoding
-                for (; nsample < band + 256; nsample++) {
-                    float c1 = su1[nsample];
-                    float c2 = su2[nsample];
-                    su1[nsample] = c2 * 2f;
-                    su2[nsample] = (c1 - c2) * 2f;
-                }
-                break;
-            case 1:
-                for (; nsample < band + 256; nsample++) {
-                    float c1 = su1[nsample];
-                    float c2 = su2[nsample];
-                    su1[nsample] = (c1 + c2) * 2f;
-                    su2[nsample] = c2 * -2f;
-                }
-                break;
-            case 2:
-            case 3:
-                for (; nsample < band + 256; nsample++) {
-                    float c1 = su1[nsample];
-                    float c2 = su2[nsample];
-                    su1[nsample] = c1 + c2;
-                    su2[nsample] = c1 - c2;
-                }
-                break;
-            default:
-                log.severe(String.format("Invalid s2 code %d", s2));
-                break;
+                case 0: // M/S decoding
+                    for (; nsample < band + 256; nsample++) {
+                        float c1 = su1[nsample];
+                        float c2 = su2[nsample];
+                        su1[nsample] = c2 * 2f;
+                        su2[nsample] = (c1 - c2) * 2f;
+                    }
+                    break;
+                case 1:
+                    for (; nsample < band + 256; nsample++) {
+                        float c1 = su1[nsample];
+                        float c2 = su2[nsample];
+                        su1[nsample] = (c1 + c2) * 2f;
+                        su2[nsample] = c2 * -2f;
+                    }
+                    break;
+                case 2:
+                case 3:
+                    for (; nsample < band + 256; nsample++) {
+                        float c1 = su1[nsample];
+                        float c2 = su2[nsample];
+                        su1[nsample] = c1 + c2;
+                        su2[nsample] = c1 - c2;
+                    }
+                    break;
+                default:
+                    logger.log(Level.ERROR, String.format("Invalid s2 code %d", s2));
+                    break;
             }
         }
     }
 
-    private void getChannelWeights(int index, int flag, float[] ch) {
+    private static void getChannelWeights(int index, int flag, float[] ch) {
         if (index == 7) {
             ch[0] = 1f;
             ch[1] = 1f;
@@ -474,11 +476,11 @@ public class Atrac3Decoder implements ICodec {
         }
     }
 
-    private float INTERPOLATE(float oldValue, float newValue, int nsample) {
+    private static float INTERPOLATE(float oldValue, float newValue, int nsample) {
         return oldValue + nsample * 0.125f * (newValue - oldValue);
     }
 
-    private void channelWeighting(float[] su1, float[] su2, int[] p3) {
+    private static void channelWeighting(float[] su1, float[] su2, int[] p3) {
         // w[x][y] y=0 is left y=1 is right
         float[][] w = new float[2][2];
 
@@ -515,12 +517,12 @@ public class Atrac3Decoder implements ICodec {
 
         if (codingMode == JOINT_STEREO && channelNum == 1) {
             if (br.read(2) != 3) {
-                log.severe("JS mono Sound Unit id != 3");
+                logger.log(Level.ERROR, "JS mono Sound Unit id != 3");
                 return AT3_ERROR;
             }
         } else {
             if (br.read(6) != 0x28) {
-                log.severe("Sound Unit id != 0x28");
+                logger.log(Level.ERROR, "Sound Unit id != 0x28");
                 return AT3_ERROR;
             }
         }
@@ -530,14 +532,14 @@ public class Atrac3Decoder implements ICodec {
 
         ret = decodeGainControl(gain2, snd.bandsCoded);
         if (ret != 0) {
-log.finer("decodeGainControl: " + ret);
+            logger.log(Level.TRACE, "decodeGainControl: " + ret);
             return ret;
         }
 
         snd.numComponents = decodeTonalComponents(snd.components, snd.bandsCoded);
 
         if (snd.numComponents < 0) {
-log.finer("snd.numComponents: " + snd.numComponents);
+            logger.log(Level.TRACE, "snd.numComponents: " + snd.numComponents);
             return snd.numComponents;
         }
 
@@ -580,7 +582,7 @@ log.finer("snd.numComponents: " + snd.numComponents);
             // decode Sound Unit 1
             ret = decodeChannelSoundUnit(ctx.units[0], ctx.samples[0], 0, JOINT_STEREO);
             if (ret != 0) {
-log.finer("decodeChannelSoundUnit: " + ret);
+                logger.log(Level.TRACE, "decodeChannelSoundUnit: " + ret);
                 return ret;
             }
 
@@ -595,7 +597,9 @@ log.finer("decodeChannelSoundUnit: " + ret);
             }
 
             // Fill the Weighting coeffs delay buffer
-            System.arraycopy(ctx.weightingDelay, 2, ctx.weightingDelay, 0, 4);
+            for (int i = 0; i < 4; i++) {
+                ctx.weightingDelay[i] = ctx.weightingDelay[2 + i];
+            }
             ctx.weightingDelay[4] = br.read1();
             ctx.weightingDelay[5] = br.read(3);
 
@@ -611,7 +615,7 @@ log.finer("decodeChannelSoundUnit: " + ret);
             br.seek(ctx.blockAlign);
 
             if (ret != 0) {
-log.finer("decodeChannelSoundUnit: " + ret);
+                logger.log(Level.TRACE, "decodeChannelSoundUnit: " + ret);
                 return ret;
             }
 
@@ -628,7 +632,7 @@ log.finer("decodeChannelSoundUnit: " + ret);
 
                 ret = decodeChannelSoundUnit(ctx.units[i], ctx.samples[i], i, ctx.codingMode);
                 if (ret != 0) {
-log.finer("decodeChannelSoundUnit: " + ret);
+                    logger.log(Level.TRACE, "decodeChannelSoundUnit: " + ret);
                     return ret;
                 }
             }
@@ -656,7 +660,7 @@ log.finer("decodeChannelSoundUnit: " + ret);
 
         writeOutput(ctx.samples, outputMemory, outputAddr, SAMPLES_PER_FRAME, ctx.channels, ctx.outputChannels);
 
-        log.finer(String.format("Bytes read 0x%X", ctx.br.getBytesRead()));
+        logger.log(Level.TRACE, String.format("Bytes read 0x%X", ctx.br.getBytesRead()));
 
         return ctx.br.getBytesRead();
     }

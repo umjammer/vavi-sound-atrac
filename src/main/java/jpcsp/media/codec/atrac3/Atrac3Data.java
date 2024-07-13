@@ -22,48 +22,48 @@ public class Atrac3Data {
 
     // VLC tables
 
-    static public final int[] huffcode1 = new int[] {
+    static public final int[] huffcode1 = {
             0x0, 0x4, 0x5, 0xC, 0xD, 0x1C, 0x1D, 0x1E, 0x1F
     };
 
-    static public final int[] huffbits1 = new int[] {1, 3, 3, 4, 4, 5, 5, 5, 5};
+    static public final int[] huffbits1 = {1, 3, 3, 4, 4, 5, 5, 5, 5};
 
-    static public final int[] huffcode2 = new int[] {0x0, 0x4, 0x5, 0x6, 0x7};
+    static public final int[] huffcode2 = {0x0, 0x4, 0x5, 0x6, 0x7};
 
-    static public final int[] huffbits2 = new int[] {1, 3, 3, 3, 3};
+    static public final int[] huffbits2 = {1, 3, 3, 3, 3};
 
-    static public final int[] huffcode3 = new int[] {0x0, 0x4, 0x5, 0xC, 0xD, 0xE, 0xF};
+    static public final int[] huffcode3 = {0x0, 0x4, 0x5, 0xC, 0xD, 0xE, 0xF};
 
-    static public final int[] huffbits3 = new int[] {1, 3, 3, 4, 4, 4, 4};
+    static public final int[] huffbits3 = {1, 3, 3, 4, 4, 4, 4};
 
-    static public final int[] huffcode4 = new int[] {
+    static public final int[] huffcode4 = {
             0x0, 0x4, 0x5, 0xC, 0xD, 0x1C, 0x1D, 0x1E, 0x1F
     };
 
-    static public final int[] huffbits4 = new int[] {1, 3, 3, 4, 4, 5, 5, 5, 5};
+    static public final int[] huffbits4 = {1, 3, 3, 4, 4, 5, 5, 5, 5};
 
-    static public final int[] huffcode5 = new int[] {
+    static public final int[] huffcode5 = {
             0x00, 0x02, 0x03, 0x08, 0x09, 0x0A, 0x0B, 0x1C,
             0x1D, 0x3C, 0x3D, 0x3E, 0x3F, 0x0C, 0x0D
     };
 
-    static public final int[] huffbits5 = new int[] {
+    static public final int[] huffbits5 = {
             2, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 6, 6, 4, 4
     };
 
-    static public final int[] huffcode6 = new int[] {
+    static public final int[] huffcode6 = {
             0x00, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x14,
             0x15, 0x16, 0x17, 0x18, 0x19, 0x34, 0x35, 0x36,
             0x37, 0x38, 0x39, 0x3A, 0x3B, 0x78, 0x79, 0x7A,
             0x7B, 0x7C, 0x7D, 0x7E, 0x7F, 0x08, 0x09
     };
 
-    static public final int[] huffbits6 = new int[] {
+    static public final int[] huffbits6 = {
             3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6,
             6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 4, 4
     };
 
-    static public final int[] huffcode7 = new int[] {
+    static public final int[] huffcode7 = {
             0x00, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E,
             0x0F, 0x10, 0x11, 0x24, 0x25, 0x26, 0x27, 0x28,
             0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30,
@@ -74,47 +74,47 @@ public class Atrac3Data {
             0xFB, 0xFC, 0xFD, 0xFE, 0xFF, 0x02, 0x03
     };
 
-    static public final int[] huffbits7 = new int[] {
+    static public final int[] huffbits7 = {
             3, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6,
             6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7,
             7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8,
             8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 4, 4
     };
 
-    static public final int[] huff_tab_sizes = new int[] {
+    static public final int[] huff_tab_sizes = {
             9, 5, 7, 9, 15, 31, 63
     };
 
-    static public final int[][] huff_codes = new int[][] {
+    static public final int[][] huff_codes = {
             huffcode1, huffcode2, huffcode3, huffcode4, huffcode5, huffcode6, huffcode7
     };
 
-    static public final int[][] huff_bits = new int[][] {
+    static public final int[][] huff_bits = {
             huffbits1, huffbits2, huffbits3, huffbits4, huffbits5, huffbits6, huffbits7
     };
 
-    static public final int[] atrac3_vlc_offs = new int[] {
+    static public final int[] atrac3_vlc_offs = {
             0, 512, 1024, 1536, 2048, 2560, 3072, 3584, 4096
     };
 
     // selector tables
 
-    static public final int[] clc_length_tab = new int[] {0, 4, 3, 3, 4, 4, 5, 6};
+    static public final int[] clc_length_tab = {0, 4, 3, 3, 4, 4, 5, 6};
 
-    static public final int[] mantissa_clc_tab = new int[] {0, 1, -2, -1};
+    static public final int[] mantissa_clc_tab = {0, 1, -2, -1};
 
-    static public final int[] mantissa_vlc_tab = new int[] {
+    static public final int[] mantissa_vlc_tab = {
             0, 0, 0, 1, 0, -1, 1, 0, -1, 0, 1, 1, 1, -1, -1, 1, -1, -1
     };
 
     // tables for the scalefactor decoding
 
-    static public final float[] inv_max_quant = new float[] {
+    static public final float[] inv_max_quant = {
             0.0f, 1.0f / 1.5f, 1.0f / 2.5f, 1.0f / 3.5f,
             1.0f / 4.5f, 1.0f / 7.5f, 1.0f / 15.5f, 1.0f / 31.5f
     };
 
-    static public final int[] subband_tab = new int[] {
+    static public final int[] subband_tab = {
             0, 8, 16, 24, 32, 40, 48, 56,
             64, 80, 96, 112, 128, 144, 160, 176,
             192, 224, 256, 288, 320, 352, 384, 416,
@@ -123,7 +123,7 @@ public class Atrac3Data {
     };
 
     /** joint stereo related tables */
-    static public final float[] matrix_coeffs = new float[] {
+    static public final float[] matrix_coeffs = {
             0.0f, 2.0f, 2.0f, 2.0f, 0.0f, 0.0f, 1.0f, 1.0f
     };
 }

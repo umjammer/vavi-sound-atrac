@@ -44,25 +44,25 @@ public class ChannelUnitContext {
     /** global noise RNG table index */
     public int noiseTableIndex;
     /** 1 - perform subband-wise channel swapping */
-    public boolean[] swapChannels = new boolean[ATRAC3P_SUBBANDS];
+    public final boolean[] swapChannels = new boolean[ATRAC3P_SUBBANDS];
     /** 1 - subband-wise IMDCT coefficients negation */
-    public boolean[] negateCoeffs = new boolean[ATRAC3P_SUBBANDS];
-    public Channel[] channels = new Channel[2];
+    public final boolean[] negateCoeffs = new boolean[ATRAC3P_SUBBANDS];
+    public final Channel[] channels = new Channel[2];
 
     // Variables related to GHA tones
     /** waves synth history for two frames */
-    public WaveSynthParams[] waveSynthHist = new WaveSynthParams[2];
+    public final WaveSynthParams[] waveSynthHist = new WaveSynthParams[2];
     public WaveSynthParams wavesInfo;
     public WaveSynthParams wavesInfoPrev;
 
-    public IPQFChannelContext[] ipqfCtx = new IPQFChannelContext[2];
+    public final IPQFChannelContext[] ipqfCtx = new IPQFChannelContext[2];
     /** overlapping buffer */
-    public float[][] prevBuf = new float[2][Atrac3plusDecoder.ATRAC3P_FRAME_SAMPLES];
+    public final float[][] prevBuf = new float[2][Atrac3plusDecoder.ATRAC3P_FRAME_SAMPLES];
 
     public static class IPQFChannelContext {
 
-        public float[][] buf1 = new float[ATRAC3P_PQF_FIR_LEN * 2][8];
-        public float[][] buf2 = new float[ATRAC3P_PQF_FIR_LEN * 2][8];
+        public final float[][] buf1 = new float[ATRAC3P_PQF_FIR_LEN * 2][8];
+        public final float[][] buf2 = new float[ATRAC3P_PQF_FIR_LEN * 2][8];
         public int pos;
     }
 

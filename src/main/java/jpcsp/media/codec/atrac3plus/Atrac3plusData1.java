@@ -1228,14 +1228,21 @@ public class Atrac3plusData1 {
     /** Tables for spectrum coding. */
     public static class Atrac3pSpecCodeTab {
 
-        public int groupSize;  ///< number of coefficients grouped together
-        public int numCoeffs;  ///< 1 - map index to a single value, > 1 - map index to a vector of values
-        public int bits;        ///< number of bits a single coefficient occupy
-        public boolean isSigned;   ///< 1 - values in that table are signed ones, otherwise - absolute ones
+        /** number of coefficients grouped together */
+        public final int groupSize;
+        /** 1 - map index to a single value, > 1 - map index to a vector of values */
+        public final int numCoeffs;
+        /** number of bits a single coefficient occupy */
+        public final int bits;
+        /** 1 - values in that table are signed ones, otherwise - absolute ones */
+        public final boolean isSigned;
 
-        public int redirect;        ///< if >= 0: tells which huffman table must be reused
-        public int[] cb;   ///< pointer to the codebook descriptor
-        public int[] xlat; ///< pointer to the translation table or null if none
+        /** if >= 0: tells which huffman table must be reused */
+        public final int redirect;
+        /** pointer to the codebook descriptor */
+        public final int[] cb;
+        /** pointer to the translation table or null if none */
+        public final int[] xlat;
 
         public Atrac3pSpecCodeTab(int group_size, int num_coeffs, int bits, int is_signed, int redirect, int[] cb, int[] xlat) {
             this.groupSize = group_size;

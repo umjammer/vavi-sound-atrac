@@ -67,7 +67,6 @@ public class Atrac9 {
      * @param at9file Location of at9 file
      * @return Byte Array of Wav file
      */
-    @SuppressWarnings("unchecked")
     public static byte[] loadAt9(String at9file) throws IOException {
         // Byte array holder for return vars
         byte[] array;

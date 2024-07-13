@@ -17,13 +17,15 @@
 
 package jpcsp.media.codec.atrac3plus;
 
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.Arrays;
-import java.util.logging.Logger;
 
 import jpcsp.media.codec.util.BitReader;
 import jpcsp.media.codec.util.VLC;
 
 import static java.lang.Math.abs;
+import static java.lang.System.getLogger;
 import static jpcsp.media.codec.util.CodecUtils.avLog2;
 import static jpcsp.media.codec.util.CodecUtils.signExtend;
 
@@ -34,8 +36,9 @@ import static jpcsp.media.codec.util.CodecUtils.signExtend;
  */
 public class ChannelUnit {
 
-    private static final Logger log = Atrac3plusDecoder.log;
-    public ChannelUnitContext ctx = new ChannelUnitContext();
+    private static final Logger logger = getLogger(ChannelUnit.class.getName());
+
+    public final ChannelUnitContext ctx = new ChannelUnitContext();
     private BitReader br;
     private Atrac3plusDsp dsp;
     private int numChannels;
@@ -191,7 +194,7 @@ public class ChannelUnit {
 
         ctx.numQuantUnits = br.read(5) + 1;
         if (ctx.numQuantUnits > 28 && ctx.numQuantUnits < 32) {
-            log.severe(String.format("Invalid number of quantization units: %d", ctx.numQuantUnits));
+            logger.log(Level.ERROR, String.format("Invalid number of quantization units: %d", ctx.numQuantUnits));
             return Atrac3plusDecoder.AT3P_ERROR;
         }
 
@@ -199,7 +202,7 @@ public class ChannelUnit {
 
         ret = decodeQuantWordlen();
         if (ret < 0) {
-log.finer("decodeQuantWordlen: " + ret);
+            logger.log(Level.TRACE, "decodeQuantWordlen: " + ret);
             return ret;
         }
 
@@ -208,13 +211,13 @@ log.finer("decodeQuantWordlen: " + ret);
 
         ret = decodeScaleFactors();
         if (ret < 0) {
-log.finer("decodeScaleFactors: " + ret);
+            logger.log(Level.TRACE, "decodeScaleFactors: " + ret);
             return ret;
         }
 
         ret = decodeCodeTableIndexes();
         if (ret < 0) {
-log.finer("decodeCodeTableIndexes: " + ret);
+            logger.log(Level.TRACE, "decodeCodeTableIndexes: " + ret);
             return ret;
         }
 
@@ -229,13 +232,13 @@ log.finer("decodeCodeTableIndexes: " + ret);
 
         ret = decodeGaincData();
         if (ret < 0) {
-log.finer("decodeGaincData: " + ret);
+            logger.log(Level.TRACE, "decodeGaincData: " + ret);
             return ret;
         }
 
         ret = decodeTonesInfo();
         if (ret < 0) {
-log.finer("decodeTonesInfo: " + ret);
+            logger.log(Level.TRACE, "decodeTonesInfo: " + ret);
             return ret;
         }
 
@@ -261,7 +264,7 @@ log.finer("decodeTonesInfo: " + ret);
         } else {
             chan.numCodedVals = br.read(5);
             if (chan.numCodedVals > ctx.numQuantUnits) {
-                log.severe("Invalid number of transmitted units");
+                logger.log(Level.ERROR, "Invalid number of transmitted units");
                 return Atrac3plusDecoder.AT3P_ERROR;
             }
 
@@ -285,7 +288,7 @@ log.finer("decodeTonesInfo: " + ret);
      * @param dst       [out]         ptr to output array
      * @param numValues number of values to unpack
      */
-    private void unpackVqShape(int startVal, int[] shapeVec, int[] dst, int numValues) {
+    private static void unpackVqShape(int startVal, int[] shapeVec, int[] dst, int numValues) {
         if (numValues > 0) {
             dst[0] = startVal;
             dst[1] = startVal;
@@ -314,7 +317,7 @@ log.finer("decodeTonesInfo: " + ret);
         for (int i = 0; i < ctx.numQuantUnits; i++) {
             chan.quWordlen[i] += weigthsTab[i];
             if (chan.quWordlen[i] < 0 || chan.quWordlen[i] > 7) {
-                log.severe(String.format("WL index out of range pos=%d, val=%d", i, chan.quWordlen[i]));
+                logger.log(Level.ERROR, String.format("WL index out of range pos=%d, val=%d", i, chan.quWordlen[i]));
                 return Atrac3plusDecoder.AT3P_ERROR;
             }
         }
@@ -337,13 +340,98 @@ log.finer("decodeTonesInfo: " + ret);
         chan.fillMode = 0;
 
         switch (br.read(2)) { // switch according to coding mode
-        case 0: // coded using constant number of bits
-            for (int i = 0; i < ctx.numQuantUnits; i++) {
-                chan.quWordlen[i] = br.read(3);
-            }
-            break;
-        case 1:
-            if (chNum > 0) {
+            case 0: // coded using constant number of bits
+                for (int i = 0; i < ctx.numQuantUnits; i++) {
+                    chan.quWordlen[i] = br.read(3);
+                }
+                break;
+            case 1:
+                if (chNum > 0) {
+                    ret = numCodedUnits(chan);
+                    if (ret < 0) {
+                        return ret;
+                    }
+
+                    if (chan.numCodedVals > 0) {
+                        VLC vlcTab = wl_vlc_tabs[br.read(2)];
+
+                        for (int i = 0; i < chan.numCodedVals; i++) {
+                            int delta = vlcTab.getVLC2(br);
+                            chan.quWordlen[i] = (refChan.quWordlen[i] + delta) & 7;
+                        }
+                    }
+                } else {
+                    weightIdx = br.read(2);
+                    ret = numCodedUnits(chan);
+                    if (ret < 0) {
+                        return ret;
+                    }
+
+                    if (chan.numCodedVals > 0) {
+                        int pos = br.read(5);
+                        if (pos > chan.numCodedVals) {
+                            logger.log(Level.ERROR, String.format("WL mode 1: invalid position %d", pos));
+                            return Atrac3plusDecoder.AT3P_ERROR;
+                        }
+
+                        int deltaBits = br.read(2);
+                        int minVal = br.read(3);
+
+                        for (int i = 0; i < pos; i++) {
+                            chan.quWordlen[i] = br.read(3);
+                        }
+
+                        for (int i = pos; i < chan.numCodedVals; i++) {
+                            chan.quWordlen[i] = (minVal + getDelta(deltaBits)) & 7;
+                        }
+                    }
+                }
+                break;
+            case 2:
+                ret = numCodedUnits(chan);
+                if (ret < 0) {
+                    return ret;
+                }
+
+                if (chNum > 0 && chan.numCodedVals > 0) {
+                    VLC vlcTab = wl_vlc_tabs[br.read(2)];
+                    int delta = vlcTab.getVLC2(br);
+                    chan.quWordlen[0] = (refChan.quWordlen[0] + delta) & 7;
+
+                    for (int i = 1; i < chan.numCodedVals; i++) {
+                        int diff = refChan.quWordlen[i] - refChan.quWordlen[i - 1];
+                        delta = vlcTab.getVLC2(br);
+                        chan.quWordlen[i] = (chan.quWordlen[i - 1] + diff + delta) & 7;
+                    }
+                } else if (chan.numCodedVals > 0) {
+                    boolean flag = br.readBool();
+                    VLC vlcTab = wl_vlc_tabs[br.read(1)];
+
+                    int startVal = br.read(3);
+                    unpackVqShape(startVal, Atrac3plusData2.atrac3p_wl_shapes[startVal][br.read(4)], chan.quWordlen, chan.numCodedVals);
+
+                    if (!flag) {
+                        for (int i = 0; i < chan.numCodedVals; i++) {
+                            int delta = vlcTab.getVLC2(br);
+                            chan.quWordlen[i] = (chan.quWordlen[i] + delta) & 7;
+                        }
+                    } else {
+                        int i;
+                        for (i = 0; i < (chan.numCodedVals & -2); i += 2) {
+                            if (!br.readBool()) {
+                                chan.quWordlen[i] = (chan.quWordlen[i] + vlcTab.getVLC2(br)) & 7;
+                                chan.quWordlen[i + 1] = (chan.quWordlen[i + 1] + vlcTab.getVLC2(br)) & 7;
+                            }
+                        }
+
+                        if ((chan.numCodedVals & 1) != 0) {
+                            chan.quWordlen[i] = (chan.quWordlen[i] + vlcTab.getVLC2(br)) & 7;
+                        }
+                    }
+                }
+                break;
+            case 3:
+                weightIdx = br.read(2);
                 ret = numCodedUnits(chan);
                 if (ret < 0) {
                     return ret;
@@ -352,100 +440,15 @@ log.finer("decodeTonesInfo: " + ret);
                 if (chan.numCodedVals > 0) {
                     VLC vlcTab = wl_vlc_tabs[br.read(2)];
 
-                    for (int i = 0; i < chan.numCodedVals; i++) {
+                    // first coefficient is coded directly
+                    chan.quWordlen[0] = br.read(3);
+
+                    for (int i = 1; i < chan.numCodedVals; i++) {
                         int delta = vlcTab.getVLC2(br);
-                        chan.quWordlen[i] = (refChan.quWordlen[i] + delta) & 7;
+                        chan.quWordlen[i] = (chan.quWordlen[i - 1] + delta) & 7;
                     }
                 }
-            } else {
-                weightIdx = br.read(2);
-                ret = numCodedUnits(chan);
-                if (ret < 0) {
-                    return ret;
-                }
-
-                if (chan.numCodedVals > 0) {
-                    int pos = br.read(5);
-                    if (pos > chan.numCodedVals) {
-                        log.severe(String.format("WL mode 1: invalid position %d", pos));
-                        return Atrac3plusDecoder.AT3P_ERROR;
-                    }
-
-                    int deltaBits = br.read(2);
-                    int minVal = br.read(3);
-
-                    for (int i = 0; i < pos; i++) {
-                        chan.quWordlen[i] = br.read(3);
-                    }
-
-                    for (int i = pos; i < chan.numCodedVals; i++) {
-                        chan.quWordlen[i] = (minVal + getDelta(deltaBits)) & 7;
-                    }
-                }
-            }
-            break;
-        case 2:
-            ret = numCodedUnits(chan);
-            if (ret < 0) {
-                return ret;
-            }
-
-            if (chNum > 0 && chan.numCodedVals > 0) {
-                VLC vlcTab = wl_vlc_tabs[br.read(2)];
-                int delta = vlcTab.getVLC2(br);
-                chan.quWordlen[0] = (refChan.quWordlen[0] + delta) & 7;
-
-                for (int i = 1; i < chan.numCodedVals; i++) {
-                    int diff = refChan.quWordlen[i] - refChan.quWordlen[i - 1];
-                    delta = vlcTab.getVLC2(br);
-                    chan.quWordlen[i] = (chan.quWordlen[i - 1] + diff + delta) & 7;
-                }
-            } else if (chan.numCodedVals > 0) {
-                boolean flag = br.readBool();
-                VLC vlcTab = wl_vlc_tabs[br.read(1)];
-
-                int startVal = br.read(3);
-                unpackVqShape(startVal, Atrac3plusData2.atrac3p_wl_shapes[startVal][br.read(4)], chan.quWordlen, chan.numCodedVals);
-
-                if (!flag) {
-                    for (int i = 0; i < chan.numCodedVals; i++) {
-                        int delta = vlcTab.getVLC2(br);
-                        chan.quWordlen[i] = (chan.quWordlen[i] + delta) & 7;
-                    }
-                } else {
-                    int i;
-                    for (i = 0; i < (chan.numCodedVals & -2); i += 2) {
-                        if (!br.readBool()) {
-                            chan.quWordlen[i] = (chan.quWordlen[i] + vlcTab.getVLC2(br)) & 7;
-                            chan.quWordlen[i + 1] = (chan.quWordlen[i + 1] + vlcTab.getVLC2(br)) & 7;
-                        }
-                    }
-
-                    if ((chan.numCodedVals & 1) != 0) {
-                        chan.quWordlen[i] = (chan.quWordlen[i] + vlcTab.getVLC2(br)) & 7;
-                    }
-                }
-            }
-            break;
-        case 3:
-            weightIdx = br.read(2);
-            ret = numCodedUnits(chan);
-            if (ret < 0) {
-                return ret;
-            }
-
-            if (chan.numCodedVals > 0) {
-                VLC vlcTab = wl_vlc_tabs[br.read(2)];
-
-                // first coefficient is coded directly
-                chan.quWordlen[0] = br.read(3);
-
-                for (int i = 1; i < chan.numCodedVals; i++) {
-                    int delta = vlcTab.getVLC2(br);
-                    chan.quWordlen[i] = (chan.quWordlen[i - 1] + delta) & 7;
-                }
-            }
-            break;
+                break;
         }
 
         if (chan.fillMode == 2) {
@@ -479,7 +482,7 @@ log.finer("decodeTonesInfo: " + ret);
         for (int i = 0; i < ctx.usedQuantUnits; i++) {
             chan.quSfIdx[i] -= weigthsTab[i];
             if (chan.quSfIdx[i] < 0 || chan.quSfIdx[i] > 63) {
-                log.severe(String.format("SF index out of range pos=%d, val=%d", i, chan.quSfIdx[i]));
+                logger.log(Level.ERROR, String.format("SF index out of range pos=%d, val=%d", i, chan.quSfIdx[i]));
                 return Atrac3plusDecoder.AT3P_ERROR;
             }
         }
@@ -501,115 +504,115 @@ log.finer("decodeTonesInfo: " + ret);
         chan.fillMode = 0;
 
         switch (br.read(2)) { // switch according to coding mode
-        case 0: // coded using constant number of bits
-            for (int i = 0; i < ctx.usedQuantUnits; i++) {
-                chan.quSfIdx[i] = br.read(6);
-            }
-            break;
-        case 1:
-            if (chNum > 0) {
-                VLC vlcTab = sf_vlc_tabs[br.read(2)];
-
+            case 0: // coded using constant number of bits
                 for (int i = 0; i < ctx.usedQuantUnits; i++) {
-                    int delta = vlcTab.getVLC2(br);
-                    chan.quSfIdx[i] = (refChan.quSfIdx[i] + delta) & 0x3F;
+                    chan.quSfIdx[i] = br.read(6);
                 }
-            } else {
-                weightIdx = br.read(2);
-                if (weightIdx == 3) {
-                    unpackSfVqShape(chan.quSfIdx, ctx.usedQuantUnits);
+                break;
+            case 1:
+                if (chNum > 0) {
+                    VLC vlcTab = sf_vlc_tabs[br.read(2)];
 
-                    int numLongVals = br.read(5);
-                    int deltaBits = br.read(2);
-                    int minVal = br.read(4) - 7;
-
-                    for (int i = 0; i < numLongVals; i++) {
-                        chan.quSfIdx[i] = (chan.quSfIdx[i] + br.read(4) - 7) & 0x3F;
-                    }
-
-                    // All others are: minVal + delta
-                    for (int i = numLongVals; i < ctx.usedQuantUnits; i++) {
-                        chan.quSfIdx[i] = (chan.quSfIdx[i] + minVal + getDelta(deltaBits)) & 0x3F;
+                    for (int i = 0; i < ctx.usedQuantUnits; i++) {
+                        int delta = vlcTab.getVLC2(br);
+                        chan.quSfIdx[i] = (refChan.quSfIdx[i] + delta) & 0x3F;
                     }
                 } else {
-                    int numLongVals = br.read(5);
-                    int deltaBits = br.read(3);
-                    int minVal = br.read(6);
-                    if (numLongVals > ctx.usedQuantUnits || deltaBits == 7) {
-                        log.severe("SF mode 1: invalid parameters");
-                        return Atrac3plusDecoder.AT3P_ERROR;
-                    }
+                    weightIdx = br.read(2);
+                    if (weightIdx == 3) {
+                        unpackSfVqShape(chan.quSfIdx, ctx.usedQuantUnits);
 
-                    // Read full-precision SF indexes
-                    for (int i = 0; i < numLongVals; i++) {
-                        chan.quSfIdx[i] = br.read(6);
-                    }
+                        int numLongVals = br.read(5);
+                        int deltaBits = br.read(2);
+                        int minVal = br.read(4) - 7;
 
-                    // All others are: minVal + delta
-                    for (int i = numLongVals; i < ctx.usedQuantUnits; i++) {
-                        chan.quSfIdx[i] = (minVal + getDelta(deltaBits)) & 0x3F;
+                        for (int i = 0; i < numLongVals; i++) {
+                            chan.quSfIdx[i] = (chan.quSfIdx[i] + br.read(4) - 7) & 0x3F;
+                        }
+
+                        // All others are: minVal + delta
+                        for (int i = numLongVals; i < ctx.usedQuantUnits; i++) {
+                            chan.quSfIdx[i] = (chan.quSfIdx[i] + minVal + getDelta(deltaBits)) & 0x3F;
+                        }
+                    } else {
+                        int numLongVals = br.read(5);
+                        int deltaBits = br.read(3);
+                        int minVal = br.read(6);
+                        if (numLongVals > ctx.usedQuantUnits || deltaBits == 7) {
+                            logger.log(Level.ERROR, "SF mode 1: invalid parameters");
+                            return Atrac3plusDecoder.AT3P_ERROR;
+                        }
+
+                        // Read full-precision SF indexes
+                        for (int i = 0; i < numLongVals; i++) {
+                            chan.quSfIdx[i] = br.read(6);
+                        }
+
+                        // All others are: minVal + delta
+                        for (int i = numLongVals; i < ctx.usedQuantUnits; i++) {
+                            chan.quSfIdx[i] = (minVal + getDelta(deltaBits)) & 0x3F;
+                        }
                     }
                 }
-            }
-            break;
-        case 2:
-            if (chNum > 0) {
-                VLC vlcTab = sf_vlc_tabs[br.read(2)];
+                break;
+            case 2:
+                if (chNum > 0) {
+                    VLC vlcTab = sf_vlc_tabs[br.read(2)];
 
-                int delta = vlcTab.getVLC2(br);
-                chan.quSfIdx[0] = (refChan.quSfIdx[0] + delta) & 0x3F;
-
-                for (int i = 1; i < ctx.usedQuantUnits; i++) {
-                    int diff = refChan.quSfIdx[i] - refChan.quSfIdx[i - 1];
-                    delta = vlcTab.getVLC2(br);
-                    chan.quSfIdx[i] = (chan.quSfIdx[i - 1] + diff + delta) & 0x3F;
-                }
-            } else if (chan.numCodedVals > 0) {
-                VLC vlcTab = sf_vlc_tabs[br.read(2) + 4];
-
-                unpackSfVqShape(chan.quSfIdx, ctx.usedQuantUnits);
-
-                for (int i = 0; i < ctx.usedQuantUnits; i++) {
                     int delta = vlcTab.getVLC2(br);
-                    chan.quSfIdx[i] = (chan.quSfIdx[i] + signExtend(delta, 4)) & 0x3F;
-                }
-            }
-            break;
-        case 3:
-            if (chNum > 0) {
-                // Copy coefficients from reference channel
-                for (int i = 0; i < ctx.usedQuantUnits; i++) {
-                    chan.quSfIdx[i] = refChan.quSfIdx[i];
-                }
-            } else {
-                weightIdx = br.read(2);
-                int vlcSel = br.read(2);
-                VLC vlcTab = sf_vlc_tabs[vlcSel];
+                    chan.quSfIdx[0] = (refChan.quSfIdx[0] + delta) & 0x3F;
 
-                if (weightIdx == 3) {
-                    vlcTab = sf_vlc_tabs[vlcSel + 4];
+                    for (int i = 1; i < ctx.usedQuantUnits; i++) {
+                        int diff = refChan.quSfIdx[i] - refChan.quSfIdx[i - 1];
+                        delta = vlcTab.getVLC2(br);
+                        chan.quSfIdx[i] = (chan.quSfIdx[i - 1] + diff + delta) & 0x3F;
+                    }
+                } else if (chan.numCodedVals > 0) {
+                    VLC vlcTab = sf_vlc_tabs[br.read(2) + 4];
 
                     unpackSfVqShape(chan.quSfIdx, ctx.usedQuantUnits);
 
-                    int diff = (br.read(4) + 56) & 0x3F;
-                    chan.quSfIdx[0] = (chan.quSfIdx[0] + diff) & 0x3F;
-
-                    for (int i = 1; i < ctx.usedQuantUnits; i++) {
+                    for (int i = 0; i < ctx.usedQuantUnits; i++) {
                         int delta = vlcTab.getVLC2(br);
-                        diff = (diff + signExtend(delta, 4)) & 0x3F;
-                        chan.quSfIdx[i] = (diff + chan.quSfIdx[i]) & 0x3F;
-                    }
-                } else {
-                    // 1st coefficient is coded directly
-                    chan.quSfIdx[0] = br.read(6);
-
-                    for (int i = 1; i < ctx.usedQuantUnits; i++) {
-                        int delta = vlcTab.getVLC2(br);
-                        chan.quSfIdx[i] = (chan.quSfIdx[i - 1] + delta) & 0x3F;
+                        chan.quSfIdx[i] = (chan.quSfIdx[i] + signExtend(delta, 4)) & 0x3F;
                     }
                 }
-            }
-            break;
+                break;
+            case 3:
+                if (chNum > 0) {
+                    // Copy coefficients from reference channel
+                    for (int i = 0; i < ctx.usedQuantUnits; i++) {
+                        chan.quSfIdx[i] = refChan.quSfIdx[i];
+                    }
+                } else {
+                    weightIdx = br.read(2);
+                    int vlcSel = br.read(2);
+                    VLC vlcTab = sf_vlc_tabs[vlcSel];
+
+                    if (weightIdx == 3) {
+                        vlcTab = sf_vlc_tabs[vlcSel + 4];
+
+                        unpackSfVqShape(chan.quSfIdx, ctx.usedQuantUnits);
+
+                        int diff = (br.read(4) + 56) & 0x3F;
+                        chan.quSfIdx[0] = (chan.quSfIdx[0] + diff) & 0x3F;
+
+                        for (int i = 1; i < ctx.usedQuantUnits; i++) {
+                            int delta = vlcTab.getVLC2(br);
+                            diff = (diff + signExtend(delta, 4)) & 0x3F;
+                            chan.quSfIdx[i] = (diff + chan.quSfIdx[i]) & 0x3F;
+                        }
+                    } else {
+                        // 1st coefficient is coded directly
+                        chan.quSfIdx[0] = br.read(6);
+
+                        for (int i = 1; i < ctx.usedQuantUnits; i++) {
+                            int delta = vlcTab.getVLC2(br);
+                            chan.quSfIdx[i] = (chan.quSfIdx[i - 1] + delta) & 0x3F;
+                        }
+                    }
+                }
+                break;
         }
 
         if (weightIdx != 0 && weightIdx < 3) {
@@ -676,7 +679,7 @@ log.finer("decodeTonesInfo: " + ret);
 
         int numCodedVals = br.read(5);
         if (numCodedVals > ctx.usedQuantUnits) {
-            log.severe(String.format("Invalid number of code table indexes: %d", numCodedVals));
+            logger.log(Level.ERROR, String.format("Invalid number of code table indexes: %d", numCodedVals));
             return Atrac3plusDecoder.AT3P_ERROR;
         }
         return numCodedVals;
@@ -698,77 +701,77 @@ log.finer("decodeTonesInfo: " + ret);
         chan.tableType = br.read(1);
 
         switch (br.read(2)) { // switch according to coding mode
-        case 0: // directly coded
-            int numBits = ctx.useFullTable ? 3 : 2;
-            numVals = getNumCtValues();
-            if (numVals < 0) {
-                return numVals;
-            }
-            for (int i = 0; i < numVals; i++) {
-                if (chan.quWordlen[i] != 0) {
-                    chan.quTabIdx[i] = br.read(numBits);
-                } else if (chNum > 0 && refChan.quWordlen[i] != 0) {
-                    // get clone master flag
-                    chan.quTabIdx[i] = br.read1();
-                }
-            }
-            break;
-        case 1: // entropy-coded
-            vlcTab = ctx.useFullTable ? ct_vlc_tabs[1] : ct_vlc_tabs[0];
-            numVals = getNumCtValues();
-            if (numVals < 0) {
-                return numVals;
-            }
-            for (int i = 0; i < numVals; i++) {
-                if (chan.quWordlen[i] != 0) {
-                    chan.quTabIdx[i] = vlcTab.getVLC2(br);
-                } else if (chNum > 0 && refChan.quWordlen[i] != 0) {
-                    // get clone master flag
-                    chan.quTabIdx[i] = br.read1();
-                }
-            }
-            break;
-        case 2: // entropy-coded delta
-            VLC deltaVlc;
-            if (ctx.useFullTable) {
-                vlcTab = ct_vlc_tabs[1];
-                deltaVlc = ct_vlc_tabs[2];
-            } else {
-                vlcTab = ct_vlc_tabs[0];
-                deltaVlc = ct_vlc_tabs[0];
-            }
-            int pred = 0;
-            numVals = getNumCtValues();
-            if (numVals < 0) {
-                return numVals;
-            }
-            for (int i = 0; i < numVals; i++) {
-                if (chan.quWordlen[i] != 0) {
-                    chan.quTabIdx[i] = (i == 0 ? vlcTab.getVLC2(br) : (pred + deltaVlc.getVLC2(br)) & mask);
-                    pred = chan.quTabIdx[i];
-                } else if (chNum > 0 && refChan.quWordlen[i] != 0) {
-                    // get clone master flag
-                    chan.quTabIdx[i] = br.read1();
-                }
-            }
-            break;
-        case 3: // entropy-coded difference to master
-            if (chNum > 0) {
-                vlcTab = ctx.useFullTable ? ct_vlc_tabs[3] : ct_vlc_tabs[0];
+            case 0: // directly coded
+                int numBits = ctx.useFullTable ? 3 : 2;
                 numVals = getNumCtValues();
                 if (numVals < 0) {
                     return numVals;
                 }
                 for (int i = 0; i < numVals; i++) {
                     if (chan.quWordlen[i] != 0) {
-                        chan.quTabIdx[i] = (refChan.quTabIdx[i] + vlcTab.getVLC2(br)) & mask;
-                    } else if (refChan.quWordlen[i] != 0) {
+                        chan.quTabIdx[i] = br.read(numBits);
+                    } else if (chNum > 0 && refChan.quWordlen[i] != 0) {
                         // get clone master flag
                         chan.quTabIdx[i] = br.read1();
                     }
                 }
-            }
-            break;
+                break;
+            case 1: // entropy-coded
+                vlcTab = ctx.useFullTable ? ct_vlc_tabs[1] : ct_vlc_tabs[0];
+                numVals = getNumCtValues();
+                if (numVals < 0) {
+                    return numVals;
+                }
+                for (int i = 0; i < numVals; i++) {
+                    if (chan.quWordlen[i] != 0) {
+                        chan.quTabIdx[i] = vlcTab.getVLC2(br);
+                    } else if (chNum > 0 && refChan.quWordlen[i] != 0) {
+                        // get clone master flag
+                        chan.quTabIdx[i] = br.read1();
+                    }
+                }
+                break;
+            case 2: // entropy-coded delta
+                VLC deltaVlc;
+                if (ctx.useFullTable) {
+                    vlcTab = ct_vlc_tabs[1];
+                    deltaVlc = ct_vlc_tabs[2];
+                } else {
+                    vlcTab = ct_vlc_tabs[0];
+                    deltaVlc = ct_vlc_tabs[0];
+                }
+                int pred = 0;
+                numVals = getNumCtValues();
+                if (numVals < 0) {
+                    return numVals;
+                }
+                for (int i = 0; i < numVals; i++) {
+                    if (chan.quWordlen[i] != 0) {
+                        chan.quTabIdx[i] = (i == 0 ? vlcTab.getVLC2(br) : (pred + deltaVlc.getVLC2(br)) & mask);
+                        pred = chan.quTabIdx[i];
+                    } else if (chNum > 0 && refChan.quWordlen[i] != 0) {
+                        // get clone master flag
+                        chan.quTabIdx[i] = br.read1();
+                    }
+                }
+                break;
+            case 3: // entropy-coded difference to master
+                if (chNum > 0) {
+                    vlcTab = ctx.useFullTable ? ct_vlc_tabs[3] : ct_vlc_tabs[0];
+                    numVals = getNumCtValues();
+                    if (numVals < 0) {
+                        return numVals;
+                    }
+                    for (int i = 0; i < numVals; i++) {
+                        if (chan.quWordlen[i] != 0) {
+                            chan.quTabIdx[i] = (refChan.quTabIdx[i] + vlcTab.getVLC2(br)) & mask;
+                        } else if (refChan.quWordlen[i] != 0) {
+                            // get clone master flag
+                            chan.quTabIdx[i] = br.read1();
+                        }
+                    }
+                }
+                break;
         }
 
         return 0;
@@ -910,48 +913,48 @@ log.finer("decodeTonesInfo: " + ret);
         Channel refChan = ctx.channels[0];
 
         switch (br.read(2)) { // switch according to coding mode
-        case 0: // fixed-length coding
-            for (int i = 0; i < codedSubbands; i++) {
-                chan.gainData[i].numPoints = br.read(3);
-            }
-            break;
-        case 1: // variable-length coding
-            for (int i = 0; i < codedSubbands; i++) {
-                chan.gainData[i].numPoints = gain_vlc_tabs[0].getVLC2(br);
-            }
-            break;
-        case 2:
-            if (chNum > 0) { // VLC modulo delta to master channel
+            case 0: // fixed-length coding
                 for (int i = 0; i < codedSubbands; i++) {
-                    int delta = gain_vlc_tabs[1].getVLC2(br);
-                    chan.gainData[i].numPoints = (refChan.gainData[i].numPoints + delta) & 7;
+                    chan.gainData[i].numPoints = br.read(3);
                 }
-            } else { // VLC modulo delta to previous
-                chan.gainData[0].numPoints = gain_vlc_tabs[0].getVLC2(br);
+                break;
+            case 1: // variable-length coding
+                for (int i = 0; i < codedSubbands; i++) {
+                    chan.gainData[i].numPoints = gain_vlc_tabs[0].getVLC2(br);
+                }
+                break;
+            case 2:
+                if (chNum > 0) { // VLC modulo delta to master channel
+                    for (int i = 0; i < codedSubbands; i++) {
+                        int delta = gain_vlc_tabs[1].getVLC2(br);
+                        chan.gainData[i].numPoints = (refChan.gainData[i].numPoints + delta) & 7;
+                    }
+                } else { // VLC modulo delta to previous
+                    chan.gainData[0].numPoints = gain_vlc_tabs[0].getVLC2(br);
 
-                for (int i = 1; i < codedSubbands; i++) {
-                    int delta = gain_vlc_tabs[1].getVLC2(br);
-                    chan.gainData[i].numPoints = (chan.gainData[i - 1].numPoints + delta) & 7;
-                }
-            }
-            break;
-        case 3:
-            if (chNum > 0) { // copy data from master channel
-                for (int i = 0; i < codedSubbands; i++) {
-                    chan.gainData[i].numPoints = refChan.gainData[i].numPoints;
-                }
-            } else { // shorter delta to min
-                int deltaBits = br.read(2);
-                int minVal = br.read(3);
-
-                for (int i = 0; i < codedSubbands; i++) {
-                    chan.gainData[i].numPoints = minVal + getDelta(deltaBits);
-                    if (chan.gainData[i].numPoints > 7) {
-                        return Atrac3plusDecoder.AT3P_ERROR;
+                    for (int i = 1; i < codedSubbands; i++) {
+                        int delta = gain_vlc_tabs[1].getVLC2(br);
+                        chan.gainData[i].numPoints = (chan.gainData[i - 1].numPoints + delta) & 7;
                     }
                 }
-            }
-            break;
+                break;
+            case 3:
+                if (chNum > 0) { // copy data from master channel
+                    for (int i = 0; i < codedSubbands; i++) {
+                        chan.gainData[i].numPoints = refChan.gainData[i].numPoints;
+                    }
+                } else { // shorter delta to min
+                    int deltaBits = br.read(2);
+                    int minVal = br.read(3);
+
+                    for (int i = 0; i < codedSubbands; i++) {
+                        chan.gainData[i].numPoints = minVal + getDelta(deltaBits);
+                        if (chan.gainData[i].numPoints > 7) {
+                            return Atrac3plusDecoder.AT3P_ERROR;
+                        }
+                    }
+                }
+                break;
         }
 
         return 0;
@@ -979,7 +982,7 @@ log.finer("decodeTonesInfo: " + ret);
      * @param dst [out] ptr to the output array
      * @param ref ptr to the reference channel
      */
-    private void gaincLevelMode3s(AtracGainInfo dst, AtracGainInfo ref) {
+    private static void gaincLevelMode3s(AtracGainInfo dst, AtracGainInfo ref) {
         for (int i = 0; i < dst.numPoints; i++) {
             dst.levCode[i] = (i >= ref.numPoints ? 7 : ref.levCode[i]);
         }
@@ -997,72 +1000,72 @@ log.finer("decodeTonesInfo: " + ret);
         Channel refChan = ctx.channels[0];
 
         switch (br.read(2)) { // switch according to coding mode
-        case 0: // fixed-length coding
-            for (int sb = 0; sb < codedSubbands; sb++) {
-                for (int i = 0; i < chan.gainData[sb].numPoints; i++) {
-                    chan.gainData[sb].levCode[i] = br.read(4);
-                }
-            }
-            break;
-        case 1:
-            if (chNum > 0) { // VLC module delta to master channel
+            case 0: // fixed-length coding
                 for (int sb = 0; sb < codedSubbands; sb++) {
                     for (int i = 0; i < chan.gainData[sb].numPoints; i++) {
-                        int delta = gain_vlc_tabs[5].getVLC2(br);
-                        int pred = (i >= refChan.gainData[sb].numPoints ? 7 : refChan.gainData[sb].levCode[i]);
-                        chan.gainData[sb].levCode[i] = (pred + delta) & 0xF;
+                        chan.gainData[sb].levCode[i] = br.read(4);
                     }
                 }
-            } else { // VLC module delta to previous
-                for (int sb = 0; sb < codedSubbands; sb++) {
-                    gaincLevelMode1m(chan.gainData[sb]);
+                break;
+            case 1:
+                if (chNum > 0) { // VLC module delta to master channel
+                    for (int sb = 0; sb < codedSubbands; sb++) {
+                        for (int i = 0; i < chan.gainData[sb].numPoints; i++) {
+                            int delta = gain_vlc_tabs[5].getVLC2(br);
+                            int pred = (i >= refChan.gainData[sb].numPoints ? 7 : refChan.gainData[sb].levCode[i]);
+                            chan.gainData[sb].levCode[i] = (pred + delta) & 0xF;
+                        }
+                    }
+                } else { // VLC module delta to previous
+                    for (int sb = 0; sb < codedSubbands; sb++) {
+                        gaincLevelMode1m(chan.gainData[sb]);
+                    }
                 }
-            }
-            break;
-        case 2:
-            if (chNum > 0) { // VLC modulo delta to previous or clone master
-                for (int sb = 0; sb < codedSubbands; sb++) {
-                    if (chan.gainData[sb].numPoints > 0) {
-                        if (br.readBool()) {
-                            gaincLevelMode1m(chan.gainData[sb]);
-                        } else {
-                            gaincLevelMode3s(chan.gainData[sb], refChan.gainData[sb]);
+                break;
+            case 2:
+                if (chNum > 0) { // VLC modulo delta to previous or clone master
+                    for (int sb = 0; sb < codedSubbands; sb++) {
+                        if (chan.gainData[sb].numPoints > 0) {
+                            if (br.readBool()) {
+                                gaincLevelMode1m(chan.gainData[sb]);
+                            } else {
+                                gaincLevelMode3s(chan.gainData[sb], refChan.gainData[sb]);
+                            }
+                        }
+                    }
+                } else { // VLC modulo delta to lev_codes of previous subband
+                    if (chan.gainData[0].numPoints > 0) {
+                        gaincLevelMode1m(chan.gainData[0]);
+                    }
+
+                    for (int sb = 1; sb < codedSubbands; sb++) {
+                        for (int i = 0; i < chan.gainData[sb].numPoints; i++) {
+                            int delta = gain_vlc_tabs[4].getVLC2(br);
+                            int pred = (i >= chan.gainData[sb - 1].numPoints ? 7 : chan.gainData[sb - 1].levCode[i]);
+                            chan.gainData[sb].levCode[i] = (pred + delta) & 0xF;
                         }
                     }
                 }
-            } else { // VLC modulo delta to lev_codes of previous subband
-                if (chan.gainData[0].numPoints > 0) {
-                    gaincLevelMode1m(chan.gainData[0]);
-                }
-
-                for (int sb = 1; sb < codedSubbands; sb++) {
-                    for (int i = 0; i < chan.gainData[sb].numPoints; i++) {
-                        int delta = gain_vlc_tabs[4].getVLC2(br);
-                        int pred = (i >= chan.gainData[sb - 1].numPoints ? 7 : chan.gainData[sb - 1].levCode[i]);
-                        chan.gainData[sb].levCode[i] = (pred + delta) & 0xF;
+                break;
+            case 3:
+                if (chNum > 0) { // clone master
+                    for (int sb = 0; sb < codedSubbands; sb++) {
+                        gaincLevelMode3s(chan.gainData[sb], refChan.gainData[sb]);
                     }
-                }
-            }
-            break;
-        case 3:
-            if (chNum > 0) { // clone master
-                for (int sb = 0; sb < codedSubbands; sb++) {
-                    gaincLevelMode3s(chan.gainData[sb], refChan.gainData[sb]);
-                }
-            } else { // shorter delta to min
-                int deltaBits = br.read(2);
-                int minVal = br.read(4);
+                } else { // shorter delta to min
+                    int deltaBits = br.read(2);
+                    int minVal = br.read(4);
 
-                for (int sb = 0; sb < codedSubbands; sb++) {
-                    for (int i = 0; i < chan.gainData[sb].numPoints; i++) {
-                        chan.gainData[sb].levCode[i] = minVal + getDelta(deltaBits);
-                        if (chan.gainData[sb].levCode[i] > 15) {
-                            return Atrac3plusDecoder.AT3P_ERROR;
+                    for (int sb = 0; sb < codedSubbands; sb++) {
+                        for (int i = 0; i < chan.gainData[sb].numPoints; i++) {
+                            chan.gainData[sb].levCode[i] = minVal + getDelta(deltaBits);
+                            if (chan.gainData[sb].levCode[i] > 15) {
+                                return Atrac3plusDecoder.AT3P_ERROR;
+                            }
                         }
                     }
                 }
-            }
-            break;
+                break;
         }
 
         return 0;
@@ -1117,129 +1120,129 @@ log.finer("decodeTonesInfo: " + ret);
 
         int codingMode = br.read(2);
         switch (codingMode) { // switch according to coding mode
-        case 0: // sequence of numbers in ascending order
-            for (int sb = 0; sb < codedSubbands; sb++) {
-                for (int i = 0; i < chan.gainData[sb].numPoints; i++) {
-                    gaincLocMode0(chan.gainData[sb], i);
-                }
-            }
-            break;
-        case 1:
-            if (chNum > 0) {
+            case 0: // sequence of numbers in ascending order
                 for (int sb = 0; sb < codedSubbands; sb++) {
-                    if (chan.gainData[sb].numPoints <= 0) {
-                        continue;
+                    for (int i = 0; i < chan.gainData[sb].numPoints; i++) {
+                        gaincLocMode0(chan.gainData[sb], i);
                     }
-                    AtracGainInfo dst = chan.gainData[sb];
-                    AtracGainInfo ref = refChan.gainData[sb];
+                }
+                break;
+            case 1:
+                if (chNum > 0) {
+                    for (int sb = 0; sb < codedSubbands; sb++) {
+                        if (chan.gainData[sb].numPoints <= 0) {
+                            continue;
+                        }
+                        AtracGainInfo dst = chan.gainData[sb];
+                        AtracGainInfo ref = refChan.gainData[sb];
 
-                    // 1st value is vlc-coded modulo delta to master
-                    int delta = gain_vlc_tabs[10].getVLC2(br);
-                    int pred = ref.numPoints > 0 ? ref.locCode[0] : 0;
-                    dst.locCode[0] = (pred + delta) & 0x1F;
+                        // 1st value is vlc-coded modulo delta to master
+                        int delta = gain_vlc_tabs[10].getVLC2(br);
+                        int pred = ref.numPoints > 0 ? ref.locCode[0] : 0;
+                        dst.locCode[0] = (pred + delta) & 0x1F;
 
-                    for (int i = 1; i < dst.numPoints; i++) {
-                        boolean moreThanRef = i >= ref.numPoints;
-                        if (dst.levCode[i] > dst.levCode[i - 1]) {
-                            // ascending curve
-                            if (moreThanRef) {
-                                delta = gain_vlc_tabs[9].getVLC2(br);
-                                dst.locCode[i] = dst.locCode[i - 1] + delta;
-                            } else {
-                                if (br.readBool()) {
-                                    gaincLocMode0(dst, i); // direct coding
+                        for (int i = 1; i < dst.numPoints; i++) {
+                            boolean moreThanRef = i >= ref.numPoints;
+                            if (dst.levCode[i] > dst.levCode[i - 1]) {
+                                // ascending curve
+                                if (moreThanRef) {
+                                    delta = gain_vlc_tabs[9].getVLC2(br);
+                                    dst.locCode[i] = dst.locCode[i - 1] + delta;
                                 } else {
-                                    dst.locCode[i] = ref.locCode[i]; // clone master
+                                    if (br.readBool()) {
+                                        gaincLocMode0(dst, i); // direct coding
+                                    } else {
+                                        dst.locCode[i] = ref.locCode[i]; // clone master
+                                    }
+                                }
+                            } else { // descending curve
+                                VLC tab = moreThanRef ? gain_vlc_tabs[7] : gain_vlc_tabs[10];
+                                delta = tab.getVLC2(br);
+                                if (moreThanRef) {
+                                    dst.locCode[i] = dst.locCode[i - 1] + delta;
+                                } else {
+                                    dst.locCode[i] = (ref.locCode[i] + delta) & 0x1F;
                                 }
                             }
-                        } else { // descending curve
-                            VLC tab = moreThanRef ? gain_vlc_tabs[7] : gain_vlc_tabs[10];
+                        }
+                    }
+                } else { // VLC delta to previous
+                    for (int sb = 0; sb < codedSubbands; sb++) {
+                        gaincLocMode1(chan.gainData[sb]);
+                    }
+                }
+                break;
+            case 2:
+                if (chNum > 0) {
+                    for (int sb = 0; sb < codedSubbands; sb++) {
+                        if (chan.gainData[sb].numPoints <= 0) {
+                            continue;
+                        }
+                        AtracGainInfo dst = chan.gainData[sb];
+                        AtracGainInfo ref = refChan.gainData[sb];
+                        if (dst.numPoints > ref.numPoints || br.readBool()) {
+                            gaincLocMode1(dst);
+                        } else { // clone master for the whole subband
+                            for (int i = 0; i < chan.gainData[sb].numPoints; i++) {
+                                dst.locCode[i] = ref.locCode[i];
+                            }
+                        }
+                    }
+                } else {
+                    // data for the first subband is coded directly
+                    for (int i = 0; i < chan.gainData[0].numPoints; i++) {
+                        gaincLocMode0(chan.gainData[0], i);
+                    }
+
+                    for (int sb = 1; sb < codedSubbands; sb++) {
+                        if (chan.gainData[sb].numPoints <= 0) {
+                            continue;
+                        }
+                        AtracGainInfo dst = chan.gainData[sb];
+
+                        // 1st value is vlc-coded modulo delta to the corresponding
+                        // value of the previous subband if any or zero
+                        int delta = gain_vlc_tabs[6].getVLC2(br);
+                        int pred = chan.gainData[sb - 1].numPoints > 0 ? chan.gainData[sb - 1].locCode[0] : 0;
+                        dst.locCode[0] = (pred + delta) & 0x1F;
+
+                        for (int i = 1; i < dst.numPoints; i++) {
+                            boolean moreThanRef = i >= chan.gainData[sb - 1].numPoints;
+                            // Select VLC table according to curve direction and
+                            // presence of prediction
+                            VLC tab = gain_vlc_tabs[(dst.levCode[i] > dst.levCode[i - 1] ? 2 : 0) + (moreThanRef ? 1 : 0) + 6];
                             delta = tab.getVLC2(br);
                             if (moreThanRef) {
                                 dst.locCode[i] = dst.locCode[i - 1] + delta;
                             } else {
-                                dst.locCode[i] = (ref.locCode[i] + delta) & 0x1F;
+                                dst.locCode[i] = (chan.gainData[sb - 1].locCode[i] + delta) & 0x1F;
                             }
                         }
                     }
                 }
-            } else { // VLC delta to previous
-                for (int sb = 0; sb < codedSubbands; sb++) {
-                    gaincLocMode1(chan.gainData[sb]);
-                }
-            }
-            break;
-        case 2:
-            if (chNum > 0) {
-                for (int sb = 0; sb < codedSubbands; sb++) {
-                    if (chan.gainData[sb].numPoints <= 0) {
-                        continue;
-                    }
-                    AtracGainInfo dst = chan.gainData[sb];
-                    AtracGainInfo ref = refChan.gainData[sb];
-                    if (dst.numPoints > ref.numPoints || br.readBool()) {
-                        gaincLocMode1(dst);
-                    } else { // clone master for the whole subband
+                break;
+            case 3:
+                if (chNum > 0) { // clone master or direct or direct coding
+                    for (int sb = 0; sb < codedSubbands; sb++) {
                         for (int i = 0; i < chan.gainData[sb].numPoints; i++) {
-                            dst.locCode[i] = ref.locCode[i];
+                            if (i >= refChan.gainData[sb].numPoints) {
+                                gaincLocMode0(chan.gainData[sb], i);
+                            } else {
+                                chan.gainData[sb].locCode[i] = refChan.gainData[sb].locCode[i];
+                            }
+                        }
+                    }
+                } else { // shorter delta to min
+                    int deltaBits = br.read(2) + 1;
+                    int minVal = br.read(5);
+
+                    for (int sb = 0; sb < codedSubbands; sb++) {
+                        for (int i = 0; i < chan.gainData[sb].numPoints; i++) {
+                            chan.gainData[sb].locCode[i] = minVal + i + br.read(deltaBits);
                         }
                     }
                 }
-            } else {
-                // data for the first subband is coded directly
-                for (int i = 0; i < chan.gainData[0].numPoints; i++) {
-                    gaincLocMode0(chan.gainData[0], i);
-                }
-
-                for (int sb = 1; sb < codedSubbands; sb++) {
-                    if (chan.gainData[sb].numPoints <= 0) {
-                        continue;
-                    }
-                    AtracGainInfo dst = chan.gainData[sb];
-
-                    // 1st value is vlc-coded modulo delta to the corresponding
-                    // value of the previous subband if any or zero
-                    int delta = gain_vlc_tabs[6].getVLC2(br);
-                    int pred = chan.gainData[sb - 1].numPoints > 0 ? chan.gainData[sb - 1].locCode[0] : 0;
-                    dst.locCode[0] = (pred + delta) & 0x1F;
-
-                    for (int i = 1; i < dst.numPoints; i++) {
-                        boolean moreThanRef = i >= chan.gainData[sb - 1].numPoints;
-                        // Select VLC table according to curve direction and
-                        // presence of prediction
-                        VLC tab = gain_vlc_tabs[(dst.levCode[i] > dst.levCode[i - 1] ? 2 : 0) + (moreThanRef ? 1 : 0) + 6];
-                        delta = tab.getVLC2(br);
-                        if (moreThanRef) {
-                            dst.locCode[i] = dst.locCode[i - 1] + delta;
-                        } else {
-                            dst.locCode[i] = (chan.gainData[sb - 1].locCode[i] + delta) & 0x1F;
-                        }
-                    }
-                }
-            }
-            break;
-        case 3:
-            if (chNum > 0) { // clone master or direct or direct coding
-                for (int sb = 0; sb < codedSubbands; sb++) {
-                    for (int i = 0; i < chan.gainData[sb].numPoints; i++) {
-                        if (i >= refChan.gainData[sb].numPoints) {
-                            gaincLocMode0(chan.gainData[sb], i);
-                        } else {
-                            chan.gainData[sb].locCode[i] = refChan.gainData[sb].locCode[i];
-                        }
-                    }
-                }
-            } else { // shorter delta to min
-                int deltaBits = br.read(2) + 1;
-                int minVal = br.read(5);
-
-                for (int sb = 0; sb < codedSubbands; sb++) {
-                    for (int i = 0; i < chan.gainData[sb].numPoints; i++) {
-                        chan.gainData[sb].locCode[i] = minVal + i + br.read(deltaBits);
-                    }
-                }
-            }
-            break;
+                break;
         }
 
         // Validate decoded information
@@ -1247,7 +1250,7 @@ log.finer("decodeTonesInfo: " + ret);
             AtracGainInfo dst = chan.gainData[sb];
             for (int i = 0; i < chan.gainData[sb].numPoints; i++) {
                 if (dst.locCode[i] < 0 || dst.locCode[i] > 31 || (i > 0 && dst.locCode[i] <= dst.locCode[i - 1])) {
-                    log.severe(String.format("Invalid gain location: ch=%d, sb=%d, pos=%d, val=%d", chNum, sb, i, dst.locCode[i]));
+                    logger.log(Level.ERROR, String.format("Invalid gain location: ch=%d, sb=%d, pos=%d, val=%d", chNum, sb, i, dst.locCode[i]));
                     return Atrac3plusDecoder.AT3P_ERROR;
                 }
             }
@@ -1348,43 +1351,43 @@ log.finer("decodeTonesInfo: " + ret);
 
         int mode = br.read(chNum + 1);
         switch (mode) {
-        case 0: // fixed-length coding
-            for (int sb = 0; sb < ctx.wavesInfo.numToneBands; sb++) {
-                if (bandHasTones[sb]) {
-                    dst[sb].numWavs = br.read(4);
+            case 0: // fixed-length coding
+                for (int sb = 0; sb < ctx.wavesInfo.numToneBands; sb++) {
+                    if (bandHasTones[sb]) {
+                        dst[sb].numWavs = br.read(4);
+                    }
                 }
-            }
-            break;
-        case 1: // variable-length coding
-            for (int sb = 0; sb < ctx.wavesInfo.numToneBands; sb++) {
-                if (bandHasTones[sb]) {
-                    dst[sb].numWavs = tone_vlc_tabs[1].getVLC2(br);
+                break;
+            case 1: // variable-length coding
+                for (int sb = 0; sb < ctx.wavesInfo.numToneBands; sb++) {
+                    if (bandHasTones[sb]) {
+                        dst[sb].numWavs = tone_vlc_tabs[1].getVLC2(br);
+                    }
                 }
-            }
-            break;
-        case 2: // VLC modulo delta to master (slave only)
-            for (int sb = 0; sb < ctx.wavesInfo.numToneBands; sb++) {
-                if (bandHasTones[sb]) {
-                    int delta = tone_vlc_tabs[2].getVLC2(br);
-                    delta = signExtend(delta, 3);
-                    dst[sb].numWavs = (ref[sb].numWavs + delta) & 0xF;
+                break;
+            case 2: // VLC modulo delta to master (slave only)
+                for (int sb = 0; sb < ctx.wavesInfo.numToneBands; sb++) {
+                    if (bandHasTones[sb]) {
+                        int delta = tone_vlc_tabs[2].getVLC2(br);
+                        delta = signExtend(delta, 3);
+                        dst[sb].numWavs = (ref[sb].numWavs + delta) & 0xF;
+                    }
                 }
-            }
-            break;
-        case 3: // copy master (slave only)
-            for (int sb = 0; sb < ctx.wavesInfo.numToneBands; sb++) {
-                if (bandHasTones[sb]) {
-                    dst[sb].numWavs = ref[sb].numWavs;
+                break;
+            case 3: // copy master (slave only)
+                for (int sb = 0; sb < ctx.wavesInfo.numToneBands; sb++) {
+                    if (bandHasTones[sb]) {
+                        dst[sb].numWavs = ref[sb].numWavs;
+                    }
                 }
-            }
-            break;
+                break;
         }
 
         // initialize start tone index for each subband
         for (int sb = 0; sb < ctx.wavesInfo.numToneBands; sb++) {
             if (bandHasTones[sb]) {
                 if (ctx.wavesInfo.tonesIndex + dst[sb].numWavs > 48) {
-                    log.severe(String.format("Too many tones: %d (max. 48)", ctx.wavesInfo.tonesIndex + dst[sb].numWavs));
+                    logger.log(Level.ERROR, String.format("Too many tones: %d (max. 48)", ctx.wavesInfo.tonesIndex + dst[sb].numWavs));
                     return Atrac3plusDecoder.AT3P_ERROR;
                 }
                 dst[sb].startIndex = ctx.wavesInfo.tonesIndex;
@@ -1493,64 +1496,64 @@ log.finer("decodeTonesInfo: " + ret);
         int mode = br.read(chNum + 1);
 
         switch (mode) {
-        case 0: // fixed-length coding
-            for (int sb = 0; sb < ctx.wavesInfo.numToneBands; sb++) {
-                if (!bandHasTones[sb] || dst[sb].numWavs == 0) {
-                    continue;
-                }
-                if (ctx.wavesInfo.amplitudeMode != 0) {
-                    for (int i = 0; i < dst[sb].numWavs; i++) {
-                        ctx.wavesInfo.waves[dst[sb].startIndex + i].ampSf = br.read(6);
+            case 0: // fixed-length coding
+                for (int sb = 0; sb < ctx.wavesInfo.numToneBands; sb++) {
+                    if (!bandHasTones[sb] || dst[sb].numWavs == 0) {
+                        continue;
                     }
-                } else {
-                    ctx.wavesInfo.waves[dst[sb].startIndex].ampSf = br.read(6);
-                }
-            }
-            break;
-        case 1: // min + VLC delta
-            for (int sb = 0; sb < ctx.wavesInfo.numToneBands; sb++) {
-                if (!bandHasTones[sb] || dst[sb].numWavs == 0) {
-                    continue;
-                }
-                if (ctx.wavesInfo.amplitudeMode != 0) {
-                    for (int i = 0; i < dst[sb].numWavs; i++) {
-                        ctx.wavesInfo.waves[dst[sb].startIndex + i].ampSf = tone_vlc_tabs[3].getVLC2(br) + 20;
+                    if (ctx.wavesInfo.amplitudeMode != 0) {
+                        for (int i = 0; i < dst[sb].numWavs; i++) {
+                            ctx.wavesInfo.waves[dst[sb].startIndex + i].ampSf = br.read(6);
+                        }
+                    } else {
+                        ctx.wavesInfo.waves[dst[sb].startIndex].ampSf = br.read(6);
                     }
-                } else {
-                    ctx.wavesInfo.waves[dst[sb].startIndex].ampSf = tone_vlc_tabs[4].getVLC2(br) + 24;
                 }
-            }
-            break;
-        case 2: // VLC module delta to master (slave only)
-            for (int sb = 0; sb < ctx.wavesInfo.numToneBands; sb++) {
-                if (!bandHasTones[sb] || dst[sb].numWavs == 0) {
-                    continue;
+                break;
+            case 1: // min + VLC delta
+                for (int sb = 0; sb < ctx.wavesInfo.numToneBands; sb++) {
+                    if (!bandHasTones[sb] || dst[sb].numWavs == 0) {
+                        continue;
+                    }
+                    if (ctx.wavesInfo.amplitudeMode != 0) {
+                        for (int i = 0; i < dst[sb].numWavs; i++) {
+                            ctx.wavesInfo.waves[dst[sb].startIndex + i].ampSf = tone_vlc_tabs[3].getVLC2(br) + 20;
+                        }
+                    } else {
+                        ctx.wavesInfo.waves[dst[sb].startIndex].ampSf = tone_vlc_tabs[4].getVLC2(br) + 24;
+                    }
                 }
-                for (int i = 0; i < dst[sb].numWavs; i++) {
-                    int delta = tone_vlc_tabs[5].getVLC2(br);
-                    delta = signExtend(delta, 5);
-                    int pred = refwaves[dst[sb].startIndex + i] >= 0 ? ctx.wavesInfo.waves[refwaves[dst[sb].startIndex + i]].ampSf : 34;
-                    ctx.wavesInfo.waves[dst[sb].startIndex + i].ampSf = (pred + delta) & 0x3F;
+                break;
+            case 2: // VLC module delta to master (slave only)
+                for (int sb = 0; sb < ctx.wavesInfo.numToneBands; sb++) {
+                    if (!bandHasTones[sb] || dst[sb].numWavs == 0) {
+                        continue;
+                    }
+                    for (int i = 0; i < dst[sb].numWavs; i++) {
+                        int delta = tone_vlc_tabs[5].getVLC2(br);
+                        delta = signExtend(delta, 5);
+                        int pred = refwaves[dst[sb].startIndex + i] >= 0 ? ctx.wavesInfo.waves[refwaves[dst[sb].startIndex + i]].ampSf : 34;
+                        ctx.wavesInfo.waves[dst[sb].startIndex + i].ampSf = (pred + delta) & 0x3F;
+                    }
                 }
-            }
-            break;
-        case 3: // clone master (slave only)
-            for (int sb = 0; sb < ctx.wavesInfo.numToneBands; sb++) {
-                if (!bandHasTones[sb]) {
-                    continue;
+                break;
+            case 3: // clone master (slave only)
+                for (int sb = 0; sb < ctx.wavesInfo.numToneBands; sb++) {
+                    if (!bandHasTones[sb]) {
+                        continue;
+                    }
+                    for (int i = 0; i < dst[sb].numWavs; i++) {
+                        ctx.wavesInfo.waves[dst[sb].startIndex + i].ampSf = refwaves[dst[sb].startIndex + i] >= 0 ? ctx.wavesInfo.waves[refwaves[dst[sb].startIndex + i]].ampSf : 32;
+                    }
                 }
-                for (int i = 0; i < dst[sb].numWavs; i++) {
-                    ctx.wavesInfo.waves[dst[sb].startIndex + i].ampSf = refwaves[dst[sb].startIndex + i] >= 0 ? ctx.wavesInfo.waves[refwaves[dst[sb].startIndex + i]].ampSf : 32;
-                }
-            }
-            break;
+                break;
         }
     }
 
     /**
      * Decode phase information for each subband of a channel.
      *
-     * @param chNum       channel to process
+     * @param chNum        channel to process
      * @param bandHasTones ptr to an array of per-band-flags:
      *                     1 - tone data present
      */
@@ -1591,7 +1594,7 @@ log.finer("decodeTonesInfo: " + ret);
 
         ctx.wavesInfo.amplitudeMode = br.read1();
         if (ctx.wavesInfo.amplitudeMode == 0) {
-            log.severe("GHA amplitude mode 0");
+            logger.log(Level.ERROR, "GHA amplitude mode 0");
             return Atrac3plusDecoder.AT3P_ERROR;
         }
 
@@ -1601,7 +1604,7 @@ log.finer("decodeTonesInfo: " + ret);
             getSubbandFlags(ctx.wavesInfo.toneSharing, ctx.wavesInfo.numToneBands);
             getSubbandFlags(ctx.wavesInfo.toneMaster, ctx.wavesInfo.numToneBands);
             if (getSubbandFlags(ctx.wavesInfo.phaseShift, ctx.wavesInfo.numToneBands)) {
-                log.warning("GHA Phase shifting");
+                logger.log(Level.WARNING, "GHA Phase shifting");
             }
         }
 

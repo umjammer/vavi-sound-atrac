@@ -22,5 +22,5 @@ public class TonalComponent {
 
     public int pos;
     public int numCoefs;
-    public float[] coef = new float[8];
+    public final float[] coef = new float[8];
 }

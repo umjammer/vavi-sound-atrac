@@ -68,7 +68,7 @@ public class AtracAudioFileReader extends AudioFileReader {
     /**
      * Return the AudioFileFormat from the given InputStream. Implementation.
      *
-     * @param bitStream input to decode
+     * @param bitStream   input to decode
      * @param mediaLength unused
      * @return an AudioInputStream object based on the audio file data contained
      * in the input stream.
@@ -77,7 +77,7 @@ public class AtracAudioFileReader extends AudioFileReader {
      * @throws IOException                   if an I/O exception occurs.
      */
     protected AudioFileFormat getAudioFileFormat(InputStream bitStream, int mediaLength) throws UnsupportedAudioFileException, IOException {
-Debug.println(Level.FINE, "enter available: " + bitStream.available());
+        Debug.println(Level.FINE, "enter available: " + bitStream.available());
         if (!bitStream.markSupported()) {
             throw new IllegalArgumentException("must be mark supported");
         }
@@ -96,7 +96,7 @@ Debug.println(Level.FINE, "enter available: " + bitStream.available());
             WAVE wave = Chunk.readFrom(bitStream, WAVE.class, context);
             fmt fmt = wave.findChildOf(WAVE.fmt.class);
             int formatCode = fmt.getFormatId();
-Debug.println(Level.FINER, "formatCode: " + formatCode);
+            Debug.println(Level.FINER, "formatCode: " + formatCode);
             sampleRate = fmt.getSamplingRate();
             channels = fmt.getNumberChannels();
             encoding = switch (formatCode) {
@@ -104,10 +104,11 @@ Debug.println(Level.FINER, "formatCode: " + formatCode);
                 case AtracEncoding.WAVE_FORMAT_EXTENSIBLE -> {
                     if (fmt.getExtended() == null) throw new IllegalArgumentException("no fmt.extension");
                     var wavext = new WaveFormatExtensible(fmt.getExtended());
-Debug.println(Level.FINER, "subFormat: " + wavext.subFormat);
+                    Debug.println(Level.FINER, "subFormat: " + wavext.subFormat);
                     if (wavext.subFormat.equals(ATRAC_ADVANCED_LOSSLESS.guid)) {
                         yield ATRAC_ADVANCED_LOSSLESS;
-                    } if (wavext.subFormat.equals(ATRAC3PLUS.guid)) {
+                    }
+                    if (wavext.subFormat.equals(ATRAC3PLUS.guid)) {
                         yield ATRAC3PLUS;
                     } else {
                         throw new UnsupportedAudioFileException("guid: " + wavext.subFormat);
@@ -125,19 +126,19 @@ Debug.println(Level.FINER, "subFormat: " + wavext.subFormat);
         } catch (IOException e) {
             throw e;
         } catch (Exception e) {
-Debug.println(Level.FINE, e);
-Debug.printStackTrace(Level.FINER, e);
+            Debug.println(Level.FINE, e);
+            Debug.printStackTrace(Level.FINER, e);
             throw (UnsupportedAudioFileException) new UnsupportedAudioFileException(e.getMessage()).initCause(e);
         } finally {
             try {
                 bitStream.reset();
             } catch (IOException e) {
                 if (Debug.isLoggable(Level.FINEST))
-Debug.printStackTrace(e);
+                    Debug.printStackTrace(e);
                 else
-Debug.println(Level.FINE, e);
+                    Debug.println(Level.FINE, e);
             }
-Debug.println(Level.FINE, "finally available: " + bitStream.available());
+            Debug.println(Level.FINE, "finally available: " + bitStream.available());
         }
         return new AudioFileFormat(AtracFileFormatType.ATRAC, format, AudioSystem.NOT_SPECIFIED);
     }

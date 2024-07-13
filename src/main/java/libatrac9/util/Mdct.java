@@ -30,11 +30,11 @@ import java.util.List;
 
 public class Mdct {
 
-    private int mdctBits;
+    private final int mdctBits;
 
-    private int mdctSize;
+    private final int mdctSize;
 
-    private double scale;
+    private final double scale;
 
     public int getMdctBits() {
         return mdctBits;
@@ -120,7 +120,8 @@ public class Mdct {
 
     /**
      * Does a Type-4 DCT.
-     * @param input The input array containing the time or frequency-domain samples
+     *
+     * @param input  The input array containing the time or frequency-domain samples
      * @param output The output array that will contain the transformed time or frequency-domain samples
      */
     private void dct4(double[] input, double[] output) {

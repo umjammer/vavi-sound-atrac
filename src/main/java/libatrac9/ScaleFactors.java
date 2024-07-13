@@ -37,36 +37,36 @@ class ScaleFactors {
         channel.setScaleFactorCodingMode(reader.readInt(2));
         if (channel.getChannelIndex() == 0) {
             switch (channel.getScaleFactorCodingMode()) {
-            case 0:
-                readVlcDeltaOffset(reader, channel);
-                break;
-            case 1:
-                readClcOffset(reader, channel);
-                break;
-            case 2:
-                if (channel.getBlock().isFirstInSuperframe()) throw new IllegalArgumentException();
-                readVlcDistanceToBaseline(reader, channel, channel.getScaleFactorsPrev(), channel.getBlock().getQuantizationUnitsPrev());
-                break;
-            case 3:
-                if (channel.getBlock().isFirstInSuperframe()) throw new IllegalArgumentException();
-                readVlcDeltaOffsetWithBaseline(reader, channel, channel.getScaleFactorsPrev(), channel.getBlock().getQuantizationUnitsPrev());
-                break;
+                case 0:
+                    readVlcDeltaOffset(reader, channel);
+                    break;
+                case 1:
+                    readClcOffset(reader, channel);
+                    break;
+                case 2:
+                    if (channel.getBlock().isFirstInSuperframe()) throw new IllegalArgumentException();
+                    readVlcDistanceToBaseline(reader, channel, channel.getScaleFactorsPrev(), channel.getBlock().getQuantizationUnitsPrev());
+                    break;
+                case 3:
+                    if (channel.getBlock().isFirstInSuperframe()) throw new IllegalArgumentException();
+                    readVlcDeltaOffsetWithBaseline(reader, channel, channel.getScaleFactorsPrev(), channel.getBlock().getQuantizationUnitsPrev());
+                    break;
             }
         } else {
             switch (channel.getScaleFactorCodingMode()) {
-            case 0:
-                readVlcDeltaOffset(reader, channel);
-                break;
-            case 1:
-                readVlcDistanceToBaseline(reader, channel, channel.getBlock().getChannels()[0].getScaleFactors(), channel.getBlock().getExtensionUnit());
-                break;
-            case 2:
-                readVlcDeltaOffsetWithBaseline(reader, channel, channel.getBlock().getChannels()[0].getScaleFactors(), channel.getBlock().getExtensionUnit());
-                break;
-            case 3:
-                if (channel.getBlock().isFirstInSuperframe()) throw new IllegalArgumentException();
-                readVlcDistanceToBaseline(reader, channel, channel.getScaleFactorsPrev(), channel.getBlock().getQuantizationUnitsPrev());
-                break;
+                case 0:
+                    readVlcDeltaOffset(reader, channel);
+                    break;
+                case 1:
+                    readVlcDistanceToBaseline(reader, channel, channel.getBlock().getChannels()[0].getScaleFactors(), channel.getBlock().getExtensionUnit());
+                    break;
+                case 2:
+                    readVlcDeltaOffsetWithBaseline(reader, channel, channel.getBlock().getChannels()[0].getScaleFactors(), channel.getBlock().getExtensionUnit());
+                    break;
+                case 3:
+                    if (channel.getBlock().isFirstInSuperframe()) throw new IllegalArgumentException();
+                    readVlcDistanceToBaseline(reader, channel, channel.getScaleFactorsPrev(), channel.getBlock().getQuantizationUnitsPrev());
+                    break;
             }
         }
 
@@ -154,21 +154,21 @@ class ScaleFactors {
             new byte[] {
                     0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 3, 2, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 6, 6, 7, 7, 8, 10, 12, 12, 12
             }, new byte[] {
-                    3, 2, 2, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 2, 3, 3, 4, 5, 7, 10, 10, 10
-            }, new byte[] {
-                    0, 2, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 8, 9, 12, 12, 12
-            }, new byte[] {
-                    0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 7, 8, 8, 10, 11, 11, 12, 13, 13, 13, 13
-            }, new byte[] {
-                    0, 2, 2, 3, 3, 4, 4, 5, 4, 5, 5, 5, 5, 6, 7, 8, 8, 8, 8, 9, 9, 9, 10, 10, 11, 12, 12, 13, 13, 14, 14, 14
-            }, new byte[] {
-                    1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 5, 6, 7, 7, 9, 11, 11, 11
-            }, new byte[] {
-                    0, 5, 8, 10, 11, 11, 12, 12, 12, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 12, 12, 12,
-                    12, 13, 15, 15, 15
-            }, new byte[] {
-                    0, 2, 3, 4, 5, 6, 6, 7, 7, 8, 8, 8, 9, 9, 10, 10, 10, 11, 11, 11, 11, 11, 11, 12, 12, 12, 12, 13, 13,
-                    15, 15, 15
-            }
+            3, 2, 2, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 2, 3, 3, 4, 5, 7, 10, 10, 10
+    }, new byte[] {
+            0, 2, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 8, 9, 12, 12, 12
+    }, new byte[] {
+            0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 7, 8, 8, 10, 11, 11, 12, 13, 13, 13, 13
+    }, new byte[] {
+            0, 2, 2, 3, 3, 4, 4, 5, 4, 5, 5, 5, 5, 6, 7, 8, 8, 8, 8, 9, 9, 9, 10, 10, 11, 12, 12, 13, 13, 14, 14, 14
+    }, new byte[] {
+            1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 5, 6, 7, 7, 9, 11, 11, 11
+    }, new byte[] {
+            0, 5, 8, 10, 11, 11, 12, 12, 12, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 12, 12, 12,
+            12, 13, 15, 15, 15
+    }, new byte[] {
+            0, 2, 3, 4, 5, 6, 6, 7, 7, 8, 8, 8, 9, 9, 10, 10, 10, 11, 11, 11, 11, 11, 11, 12, 12, 12, 12, 13, 13,
+            15, 15, 15
+    }
     };
 }

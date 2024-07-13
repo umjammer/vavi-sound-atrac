@@ -23,7 +23,7 @@ import static jpcsp.media.codec.atrac3plus.Atrac3plusDecoder.ATRAC3P_SUBBANDS;
 /** Sound channel parameters */
 public class Channel {
 
-    public int chNum;
+    public final int chNum;
     /** number of transmitted quant unit values */
     public int numCodedVals;
     public int fillMode;
@@ -31,19 +31,19 @@ public class Channel {
     /** table type: 0 - tone?, 1- noise? */
     public int tableType;
     /** array of word lengths for each quant unit */
-    public int[] quWordlen = new int[32];
+    public final int[] quWordlen = new int[32];
     /** array of scale factor indexes for each quant unit */
-    public int[] quSfIdx = new int[32];
+    public final int[] quSfIdx = new int[32];
     /** array of code table indexes for each quant unit */
-    public int[] quTabIdx = new int[32];
+    public final int[] quTabIdx = new int[32];
     /** decoded IMDCT spectrum */
-    public int[] spectrum = new int[2048];
+    public final int[] spectrum = new int[2048];
     /** power compensation levels */
-    public int[] powerLevs = new int[5];
+    public final int[] powerLevs = new int[5];
 
     // imdct window shape history (2 frames) for overlapping.
     /** IMDCT window shape, 0=sine/1=steep */
-    public boolean[][] wndShapeHist;
+    public final boolean[][] wndShapeHist;
     /** IMDCT window shape for current frame */
     public boolean[] wndShape;
     /** IMDCT window shape for previous frame */
@@ -51,7 +51,7 @@ public class Channel {
 
     // gain control data history (2 frames) for overlapping.
     /** gain control data for all subbands */
-    AtracGainInfo[][] gainDataHist;
+    final AtracGainInfo[][] gainDataHist;
     /** gain control data for next frame */
     AtracGainInfo[] gainData;
     /** gain control data for previous frame */
@@ -60,7 +60,7 @@ public class Channel {
     public int numGainSubbands;
 
     // tones data history (2 frames) for overlapping.
-    WavesData[][] tonesInfoHist;
+    final WavesData[][] tonesInfoHist;
     WavesData[] tonesInfo;
     WavesData[] tonesInfoPrev;
 

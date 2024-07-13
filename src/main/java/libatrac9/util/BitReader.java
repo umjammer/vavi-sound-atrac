@@ -128,7 +128,7 @@ public class BitReader {
         if (bitCount <= 25 && remaining() >= 32) {
 //            int value = buffer[byteIndex] << 24 | buffer[byteIndex + 1] << 16 | buffer[byteIndex + 2] << 8 | buffer[byteIndex + 3];
             int value = ByteUtil.readBeInt(buffer, byteIndex);
-            value &= (int) (0xFFFF_FFFF >> bitIndex);
+            value &= 0xFFFF_FFFF >> bitIndex;
             value >>>= 32 - bitCount - bitIndex;
             return value;
         }
