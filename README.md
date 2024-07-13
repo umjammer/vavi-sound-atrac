@@ -32,7 +32,7 @@ Pure Java ATRAC3plus decoder (Java Sound SPI) powered by [Jpcsp](https://github.
    * https://github.com/Thealexbarney/LibAtrac9/tree/master/CSharp/LibAtrac9
    * https://github.com/xXxTheDarkprogramerxXx/PS4_Tools
    * https://www.psdevwiki.com/ps4/Snd0.at9
-   * https://mega.nz/file/6xlxGBAT#y7XR9u5bmS-qvu2Hd8DM0k_1aSmxaheTdN_5smKcfRc (sony at9tool.exe)
+   * [sony at9tool](https://mega.nz/file/6xlxGBAT#y7XR9u5bmS-qvu2Hd8DM0k_1aSmxaheTdN_5smKcfRc)
      * `at9tool -e -br 144 [-wholeloop] in.wav out.at9`
 
 ## TODO
