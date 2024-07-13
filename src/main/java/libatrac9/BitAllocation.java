@@ -79,15 +79,15 @@ class BitAllocation {
                 channel.getPrecisions()[i] = channel.getScaleFactors()[i] + channel.getPrecisionMask()[i] - block.getGradient()[i];
                 if (channel.getPrecisions()[i] > 0) {
                     switch (block.getGradientMode()) {
-                    case 1:
-                        channel.getPrecisions()[i] /= 2;
-                        break;
-                    case 2:
-                        channel.getPrecisions()[i] = 3 * channel.getPrecisions()[i] / 8;
-                        break;
-                    case 3:
-                        channel.getPrecisions()[i] /= 4;
-                        break;
+                        case 1:
+                            channel.getPrecisions()[i] /= 2;
+                            break;
+                        case 2:
+                            channel.getPrecisions()[i] = 3 * channel.getPrecisions()[i] / 8;
+                            break;
+                        case 3:
+                            channel.getPrecisions()[i] /= 4;
+                            break;
                     }
                 }
             }

@@ -244,7 +244,7 @@ public class Atract9FormatBuilder {
     /** */
     public static class WaveConfiguration extends Configuration {
 
-        public WaveCodec codec = WaveCodec.Pcm16Bit;
+        public final WaveCodec codec = WaveCodec.Pcm16Bit;
     }
 
     /** */
@@ -507,20 +507,14 @@ Debug.println(Level.FINER, "stream: " + stream.getLength());
         private static int getChannelMask(int channelCount) {
             // Nothing special about these masks. I just choose
             // whatever channel combinations seemed okay.
-            switch (channelCount) {
-            case 4:
-                return 0x0033;
-            case 5:
-                return 0x0133;
-            case 6:
-                return 0x0633;
-            case 7:
-                return 0x01f3;
-            case 8:
-                return 0x06f3;
-            default:
-                return (1 << channelCount) - 1;
-            }
+            return switch (channelCount) {
+                case 4 -> 0x0033;
+                case 5 -> 0x0133;
+                case 6 -> 0x0633;
+                case 7 -> 0x01f3;
+                case 8 -> 0x06f3;
+                default -> (1 << channelCount) - 1;
+            };
         }
     }
 
@@ -532,7 +526,7 @@ Debug.println(Level.FINER, "stream: " + stream.getLength());
         static {
             containers.put(FileType.Wave, new ContainerType("WAVE", List.of("wav"), "WAVE Audio File", WaveReader::new, WaveWriter::new));
             containers.put(FileType.Atrac9, new ContainerType("ATRAC9", List.of("at9"), "ATRAC9 Audio File", At9Reader::new, null));
-        };
+        }
 
         public static final Map<String, FileType> extensions =
                 containers.entrySet().stream().flatMap(x -> x.getValue().extensions.stream().map(y -> new Object[] {y, x.getKey()}))
@@ -593,7 +587,7 @@ Debug.println(Level.FINER, "stream: " + stream.getLength());
     /** */
     public static class Pcm8Format extends AudioFormatBase<Pcm8Format, Pcm8FormatBuilder, CodecParameters> {
 
-        public byte[][] channels;
+        public final byte[][] channels;
 
         public boolean isSigned() {
             return false;
@@ -746,13 +740,13 @@ Debug.println(Level.FINER, "stream: " + stream.getLength());
     /** */
     public static class ContainerType {
 
-        public String displayName;
-        public List<String> extensions;
-        public String description;
-        public Supplier<IAudioReader> getReader;
-        public Supplier<IAudioWriter> getWriter;
+        public final String displayName;
+        public final List<String> extensions;
+        public final String description;
+        public final Supplier<IAudioReader<?>> getReader;
+        public final Supplier<IAudioWriter<?>> getWriter;
 
-        public ContainerType(String displayName, List<String> extensions, String description, Supplier<IAudioReader> getReader, Supplier<IAudioWriter> getWriter) {
+        public ContainerType(String displayName, List<String> extensions, String description, Supplier<IAudioReader<?>> getReader, Supplier<IAudioWriter<?>> getWriter) {
             this.displayName = displayName;
             this.extensions = extensions;
             this.description = description;
@@ -985,13 +979,13 @@ Debug.println(Level.FINER, "stream: " + stream.getLength());
             this.configuration = configuration;
         }
 
-        public IAudioFormat audioFormat;
+        public final IAudioFormat audioFormat;
 
         public AudioData getAudio() {
             return new AudioData(audioFormat);
         }
 
-        public Configuration configuration;
+        public final Configuration configuration;
     }
 
     /** */
@@ -1081,7 +1075,7 @@ Debug.println(Level.FINER, "stream: " + stream.getLength());
      */
     public static class Pcm16Format extends AudioFormatBase<Pcm16Format, Pcm16FormatBuilder, CodecParameters> {
 
-        public short[][] channels;
+        public final short[][] channels;
 
         public Pcm16Format() {
             channels = new short[0][];
@@ -1284,7 +1278,7 @@ Debug.println(Level.FINER, "stream: " + stream.getLength());
 
         @Override
         public Pcm16Format toPcm16(CodecParameters config) {
-            return toPcm16(config);
+            return toPcm16();
         }
 
         @Override
@@ -1306,7 +1300,7 @@ Debug.println(Level.FINER, "stream: " + stream.getLength());
             unalignedLoopStart = builder.loopStart;
             unalignedLoopEnd = builder.loopEnd;
             _tracks = builder.tracks;
-            tracks = _tracks != null && _tracks.size() > 0 ? _tracks : AudioTrack.getDefaultTrackList(channelCount);
+            tracks = _tracks != null && !_tracks.isEmpty() ? _tracks : AudioTrack.getDefaultTrackList(channelCount);
         }
 
         @Override
@@ -1331,6 +1325,7 @@ Debug.println(Level.FINER, "stream: " + stream.getLength());
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public boolean tryAdd(IAudioFormat format, /* out */ IAudioFormat[] result) {
             result[0] = null;
             var castFormat = (TFormat) format;
@@ -1365,6 +1360,7 @@ Debug.println(Level.FINER, "stream: " + stream.getLength());
             return builder;
         }
 
+        @SuppressWarnings("unchecked")
         private TConfig getDerivedParameters(CodecParameters param) {
             if (param == null) return null;
             var config = (TConfig) param;
@@ -1395,6 +1391,7 @@ Debug.println(Level.FINER, "stream: " + stream.getLength());
 
         public abstract TFormat build();
 
+        @SuppressWarnings("unchecked")
         public TBuilder withLoop(boolean loop, int loopStart, int loopEnd) {
             if (!loop) {
                 return withLoop(false);
@@ -1419,6 +1416,7 @@ Debug.println(Level.FINER, "stream: " + stream.getLength());
             return (TBuilder) this;
         }
 
+        @SuppressWarnings("unchecked")
         public TBuilder withLoop(boolean loop) {
             looping = loop;
             loopStart = 0;
@@ -1426,6 +1424,7 @@ Debug.println(Level.FINER, "stream: " + stream.getLength());
             return (TBuilder) this;
         }
 
+        @SuppressWarnings("unchecked")
         public TBuilder withTracks(List<AudioTrack> tracks) {
             this.tracks = Objects.requireNonNull(tracks);
             return (TBuilder) this;
@@ -1446,9 +1445,9 @@ Debug.println(Level.FINER, "stream: " + stream.getLength());
     /** */
     public static class Atrac9Format extends AudioFormatBase<Atrac9Format, Atrac9FormatBuilder, Atrac9Parameters> {
 
-        public byte[][] audioData;
-        public Atrac9Config config;
-        public int encoderDelay;
+        public final byte[][] audioData;
+        public final Atrac9Config config;
+        public final int encoderDelay;
 
         private Atrac9Format(Atrac9FormatBuilder b) {
             super(b);
@@ -1539,7 +1538,7 @@ Debug.println(Level.FINER, "array: pcmBuffer, " + pcmOut.length + " x " + pcmBuf
     public static class Atrac9FormatBuilder extends AudioFormatBaseBuilder<Atrac9Format, Atrac9FormatBuilder, Atrac9Parameters> {
 
         public Atrac9Config config;
-        public byte[][] audioData;
+        public final byte[][] audioData;
 
         @Override
         public int getChannelCount() {

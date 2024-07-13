@@ -15,7 +15,6 @@ import vavi.io.LittleEndianDataInputStream;
 import vavi.util.ByteUtil;
 import vavi.util.win32.Chunk;
 import vavi.util.win32.WAVE;
-import vavi.util.win32.WAVE.data;
 
 
 /**
@@ -59,7 +58,7 @@ public class Atrac9 {
     /** WAVE.fmt.ext */
     public static class WaveFormatExtensible {
 
-        public int size;
+        public final int size;
         public int validBitsPerSample;
 
         public int getSamplesPerBlock() {
@@ -70,8 +69,8 @@ public class Atrac9 {
             validBitsPerSample = value;
         }
 
-        public int channelMask;
-        public UUID subFormat;
+        public final int channelMask;
+        public final UUID subFormat;
         public byte[] extra;
 
         public WaveFormatExtensible(byte[] b) throws IOException {
@@ -103,6 +102,7 @@ public class Atrac9 {
     public static class fact extends WAVE.fact {
 
         static abstract class union {
+
             public abstract void setData(LittleEndianDataInputStream ledis) throws IOException;
         }
 

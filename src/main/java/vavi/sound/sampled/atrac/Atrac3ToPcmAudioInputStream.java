@@ -43,7 +43,7 @@ class Atrac3ToPcmAudioInputStream extends AudioInputStream {
         super(new OutputEngineInputStream(new Atrac3OutputEngine(in)), format, length);
     }
 
-    /** */
+    /**  */
     private static class Atrac3OutputEngine implements OutputEngine {
 
         public static final int PSP_CODEC_AT3PLUS = 0x00001000;
@@ -53,26 +53,26 @@ class Atrac3ToPcmAudioInputStream extends AudioInputStream {
         public static final int FMT_CHUNK_MAGIC = 0x20746D66; // "FMT "
         public static final int DATA_CHUNK_MAGIC = 0x61746164; // "DATA"
 
-        /** */
-        private ByteBuffer in;
+        /**  */
+        private final ByteBuffer in;
 
-        /** */
+        /**  */
         private DataOutputStream out;
 
-        /** */
+        /**  */
         private final ICodec decoder;
 
-        /** */
+        /**  */
         private int inputAddr;
 
-        /** */
+        /**  */
         private int length;
-        /** */
+        /**  */
         private int channels = 2;
-        /** */
+        /**  */
         private int bytesPerFrame = 0;
 
-        /** */
+        /**  */
         public Atrac3OutputEngine(AudioInputStream in) throws IOException {
             byte[] inBuf = in.readAllBytes();
             this.in = ByteBuffer.wrap(inBuf).order(ByteOrder.LITTLE_ENDIAN);
@@ -84,31 +84,31 @@ class Atrac3ToPcmAudioInputStream extends AudioInputStream {
             if (ByteUtil.readLeInt(inBuf, inputAddr) == RIFF_MAGIC) {
                 int scanOffset = 12;
                 while (dataOffset <= 0) {
-                    int chunkMagic = ByteUtil.readLeInt(inBuf,inputAddr + scanOffset);
-                    int chunkLength = ByteUtil.readLeInt(inBuf,inputAddr + scanOffset + 4);
+                    int chunkMagic = ByteUtil.readLeInt(inBuf, inputAddr + scanOffset);
+                    int chunkLength = ByteUtil.readLeInt(inBuf, inputAddr + scanOffset + 4);
                     scanOffset += 8;
-byte[] m = new byte[4];
-ByteUtil.writeLeInt(chunkMagic, m);
-Debug.printf(Level.FINER, "@CHUNK: %c%c%c%c, offset: %d, length: %d", m[0], m[1], m[2], m[3], scanOffset, chunkLength);
+                    byte[] m = new byte[4];
+                    ByteUtil.writeLeInt(chunkMagic, m);
+                    Debug.printf(Level.FINER, "@CHUNK: %c%c%c%c, offset: %d, length: %d", m[0], m[1], m[2], m[3], scanOffset, chunkLength);
                     switch (chunkMagic) {
-                    case FMT_CHUNK_MAGIC:
-                        codecType = switch (ByteUtil.readLeShort(inBuf, inputAddr + scanOffset) & 0xffff) {
-                            case AtracEncoding.WAVE_FORMAT_EXTENSIBLE -> PSP_CODEC_AT3PLUS;
-                            case AtracEncoding.AT3_MAGIC -> PSP_CODEC_AT3;
-                            default -> codecType;
-                        };
-                        channels = ByteUtil.readLeShort(inBuf, inputAddr + scanOffset + 2);
-Debug.println(Level.FINER, "channels: " + channels);
-                        bytesPerFrame = ByteUtil.readLeShort(inBuf, inputAddr + scanOffset + 12);
-Debug.println(Level.FINER, "bytesPerFrame: " + bytesPerFrame);
-                        int extraDataSize = ByteUtil.readLeShort(inBuf, inputAddr + scanOffset + 16);
-                        if (extraDataSize == 14) {
-                            codingMode = ByteUtil.readLeShort(inBuf, inputAddr + scanOffset + 18 + 6);
-                        }
-                        break;
-                    case DATA_CHUNK_MAGIC:
-                        dataOffset = scanOffset;
-                        break;
+                        case FMT_CHUNK_MAGIC:
+                            codecType = switch (ByteUtil.readLeShort(inBuf, inputAddr + scanOffset) & 0xffff) {
+                                case AtracEncoding.WAVE_FORMAT_EXTENSIBLE -> PSP_CODEC_AT3PLUS;
+                                case AtracEncoding.AT3_MAGIC -> PSP_CODEC_AT3;
+                                default -> codecType;
+                            };
+                            channels = ByteUtil.readLeShort(inBuf, inputAddr + scanOffset + 2);
+                            Debug.println(Level.FINER, "channels: " + channels);
+                            bytesPerFrame = ByteUtil.readLeShort(inBuf, inputAddr + scanOffset + 12);
+                            Debug.println(Level.FINER, "bytesPerFrame: " + bytesPerFrame);
+                            int extraDataSize = ByteUtil.readLeShort(inBuf, inputAddr + scanOffset + 16);
+                            if (extraDataSize == 14) {
+                                codingMode = ByteUtil.readLeShort(inBuf, inputAddr + scanOffset + 18 + 6);
+                            }
+                            break;
+                        case DATA_CHUNK_MAGIC:
+                            dataOffset = scanOffset;
+                            break;
                     }
                     scanOffset += chunkLength;
                 }
@@ -118,14 +118,14 @@ Debug.println(Level.FINER, "bytesPerFrame: " + bytesPerFrame);
 
             this.decoder = switch (codecType) {
                 case PSP_CODEC_AT3 -> new Atrac3Decoder();
-                case PSP_CODEC_AT3PLUS ->  new Atrac3plusDecoder();
+                case PSP_CODEC_AT3PLUS -> new Atrac3plusDecoder();
                 default -> throw new IllegalArgumentException("not atrac3");
             };
-Debug.println(Level.FINER, "codec: " + this.decoder);
+            Debug.println(Level.FINER, "codec: " + this.decoder);
             this.decoder.init(bytesPerFrame, channels, channels, codingMode);
 
             this.inputAddr += dataOffset;
-Debug.println(Level.FINER, "inputAddr: " + inputAddr);
+            Debug.println(Level.FINER, "inputAddr: " + inputAddr);
             this.length -= dataOffset;
         }
 
@@ -138,7 +138,7 @@ Debug.println(Level.FINER, "inputAddr: " + inputAddr);
             }
         }
 
-        /** */
+        /**  */
         private int frameNbr;
 
         @Override
@@ -149,11 +149,11 @@ Debug.println(Level.FINER, "inputAddr: " + inputAddr);
                 ByteBuffer outBuf = ByteBuffer.allocate(decoder.getNumberOfSamples() * 2 * channels).order(ByteOrder.LITTLE_ENDIAN);
                 int result = decoder.decode(in, inputAddr, length, outBuf, 0);
                 if (result < 0) {
-Debug.printf(Level.WARNING, "Frame #%d, result 0x%X", frameNbr, result);
+                    Debug.printf(Level.WARNING, "Frame #%d, result 0x%X", frameNbr, result);
                     throw new IllegalStateException(String.format("Frame #%d, result 0x%08X", frameNbr, result));
                 }
                 if (result == 0) {
-Debug.printf(Level.FINER, "Frame #%d, EOF", frameNbr);
+                    Debug.printf(Level.FINER, "Frame #%d, EOF", frameNbr);
                     out.close();
                     return;
                 }
@@ -162,7 +162,7 @@ Debug.printf(Level.FINER, "Frame #%d, EOF", frameNbr);
                     if (bytesPerFrame == 0) {
                         consumedBytes = result;
                     } else {
-Debug.printf(Level.WARNING, "Frame #%d, result 0x%X, expected 0x%X", frameNbr, result, bytesPerFrame);
+                        Debug.printf(Level.WARNING, "Frame #%d, result 0x%X, expected 0x%X", frameNbr, result, bytesPerFrame);
                     }
                 }
 

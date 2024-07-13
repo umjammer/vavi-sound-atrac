@@ -35,63 +35,63 @@ public class Atrac9Config {
     /**
      * The 4-byte ATRAC9 configuration data.
      */
-    private byte[] configData;
+    private final byte[] configData;
 
     /**
      * A 4-bit value specifying one of 16 sample rates.
      */
-    private int sampleRateIndex;
+    private final int sampleRateIndex;
     /**
      * A 3-bit value specifying one of 6 substream channel mappings.
      */
-    private int channelConfigIndex;
+    private final int channelConfigIndex;
     /**
      * An 11-bit value containing the average size of a single frame.
      */
-    private int frameBytes;
+    private final int frameBytes;
     /**
      * A 2-bit value indicating how many frames are in each superframe.
      */
-    private int superframeIndex;
+    private final int superframeIndex;
 
     /**
      * The channel mapping used by the ATRAC9 stream.
      */
-    private ChannelConfig channelConfig;
+    private final ChannelConfig channelConfig;
     /**
      * The total number of channels in the ATRAC9 stream.
      */
-    private int channelCount;
+    private final int channelCount;
     /**
      * The sample rate of the ATRAC9 stream.
      */
-    private int sampleRate;
+    private final int sampleRate;
     /**
      * Indicates whether the ATRAC9 stream has a {@link #sampleRateIndex} of 8 or above.
      */
-    private boolean highSampleRate;
+    private final boolean highSampleRate;
 
     /**
      * The number of frames in each superframe.
      */
-    private int framesPerSuperframe;
+    private final int framesPerSuperframe;
     /**
      * The number of samples in one frame as an exponent of 2.
      * {@link #frameSamples} = 2^{@code #frameSamplesPower}.
      */
-    private int frameSamplesPower;
+    private final int frameSamplesPower;
     /**
      * The number of samples in one frame.
      */
-    private int frameSamples;
+    private final int frameSamples;
     /**
      * The number of bytes in one superframe.
      */
-    private int superframeBytes;
+    private final int superframeBytes;
     /**
      * The number of samples in one superframe.
      */
-    private int superframeSamples;
+    private final int superframeSamples;
 
     public byte[] getConfigData() {
         return configData;
@@ -152,7 +152,7 @@ public class Atrac9Config {
     /**
      * Reads ATRAC9 configuration data and calculates the stream parameters from it.
      *
-     *@param configData The processed ATRAC9 configuration.
+     * @param configData The processed ATRAC9 configuration.
      */
     public Atrac9Config(byte[] configData) {
         if (configData == null || configData.length != 4) {

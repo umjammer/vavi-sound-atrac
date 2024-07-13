@@ -120,8 +120,8 @@ Debug.println(Level.FINER, chunk);
 
     public static class WaveFormatTags {
 
-        public static int WaveFormatPcm = 0x0001;
-        public static int WaveFormatExtensible = 0xFFFE;
+        public static final int WaveFormatPcm = 0x0001;
+        public static final int WaveFormatExtensible = 0xFFFE;
     }
 
     public static class WaveFmtChunk extends RiffSubChunk {
@@ -377,8 +377,8 @@ Debug.println(Level.FINER, subChunk);
 
     public static class MediaSubtypes {
 
-        public static UUID MediaSubtypePcm = UUID.fromString("00000001-0000-0010-8000-00AA00389B71");
-        public static UUID MediaSubtypeAtrac9 = UUID.fromString("47E142D2-36BA-4d8d-88FC-61654F8C836C");
+        public static final UUID MediaSubtypePcm = UUID.fromString("00000001-0000-0010-8000-00AA00389B71");
+        public static final UUID MediaSubtypeAtrac9 = UUID.fromString("47E142D2-36BA-4d8d-88FC-61654F8C836C");
     }
 
     static class At9DataChunk extends RiffSubChunk {

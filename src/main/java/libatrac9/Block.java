@@ -287,16 +287,12 @@ class Block {
     }
 
     public static int BlockTypeToChannelCount(BlockType blockType) {
-        switch (blockType) {
-        case Mono:
-            return 1;
-        case Stereo:
-            return 2;
-        case LFE:
-            return 1;
-        default:
-            return 0;
-        }
+        return switch (blockType) {
+            case Mono -> 1;
+            case Stereo -> 2;
+            case LFE -> 1;
+            default -> 0;
+        };
     }
 
     /**

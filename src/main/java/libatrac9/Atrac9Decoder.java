@@ -69,6 +69,7 @@ public class Atrac9Decoder {
 
     /**
      * Sets up the decoder to decode an ATRAC9 stream based on the information in {@code configData}.
+     *
      * @param configData A 4-byte value containing information about the ATRAC9 stream.
      */
     public void initialize(byte[] configData) {
@@ -80,11 +81,12 @@ public class Atrac9Decoder {
 
     /**
      * Decodes one superframe of ATRAC9 data.
+     *
      * @param atrac9Data The ATRAC9 data to decode. The array must be at least
-     * {@link #config}.{@link Atrac9Config#getSuperframeBytes()} bytes long.
-     * @param pcmOut A buffer that the decoded PCM data will be placed in.
-     * The array must have dimensions of at least [{@link #config}.{@link Atrac9Config#getChannelCount()}]
-     * [{@link #config}.{@link Atrac9Config#getSuperframeSamples()}].
+     *                   {@link #config}.{@link Atrac9Config#getSuperframeBytes()} bytes long.
+     * @param pcmOut     A buffer that the decoded PCM data will be placed in.
+     *                   The array must have dimensions of at least [{@link #config}.{@link Atrac9Config#getChannelCount()}]
+     *                   [{@link #config}.{@link Atrac9Config#getSuperframeSamples()}].
      */
     public void decode(byte[] atrac9Data, short[][] pcmOut) {
         if (!initialized) throw new IllegalStateException("Decoder must be initialized before decoding.");

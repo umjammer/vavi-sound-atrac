@@ -43,12 +43,12 @@ public class ChannelConfig {
     /**
      * The number of blocks or substreams in the ATRAC9 stream
      */
-    private int blockCount;
+    private final int blockCount;
 
     /**
      * The type of each block or substream in the ATRAC9 stream
      */
-    private BlockType[] blockTypes;
+    private final BlockType[] blockTypes;
 
     /**
      * The number of channels in the ATRAC9 stream

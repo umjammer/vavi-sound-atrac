@@ -22,157 +22,158 @@ import java.nio.ByteBuffer;
 
 
 public class BitReader implements IBitReader {
-	private final ByteBuffer mem;
-	private int addr;
-	private int initialAddr;
-	private int initialSize;
-	private int size;
-	private int bits;
-	private int value;
-	private int direction;
 
-	public BitReader(ByteBuffer mem, int addr, int size) {
-		this.mem = mem;
-		this.addr = addr;
-		this.size = size;
-		initialAddr = addr;
-		initialSize = size;
-		bits = 0;
-		direction = 1;
-	}
+    private final ByteBuffer mem;
+    private int addr;
+    private final int initialAddr;
+    private final int initialSize;
+    private int size;
+    private int bits;
+    private int value;
+    private int direction;
 
-	@Override
-	public boolean readBool() {
-		return read1() != 0;
-	}
+    public BitReader(ByteBuffer mem, int addr, int size) {
+        this.mem = mem;
+        this.addr = addr;
+        this.size = size;
+        initialAddr = addr;
+        initialSize = size;
+        bits = 0;
+        direction = 1;
+    }
 
-	protected int nextAddr() {
-		size--;
-		return addr + direction;
-	}
+    @Override
+    public boolean readBool() {
+        return read1() != 0;
+    }
 
-	protected int previousAddr() {
-		size++;
-		return addr - direction;
-	}
+    protected int nextAddr() {
+        size--;
+        return addr + direction;
+    }
 
-	@Override
-	public int read1() {
-		if (bits <= 0) {
-			value = mem.get(addr) & 0xff;
-			addr = nextAddr();
-			bits = 8;
-		}
-		int bit = value >> 7;
-		bits--;
-		value = (value << 1) & 0xFF;
+    protected int previousAddr() {
+        size++;
+        return addr - direction;
+    }
 
-		return bit;
-	}
+    @Override
+    public int read1() {
+        if (bits <= 0) {
+            value = mem.get(addr) & 0xff;
+            addr = nextAddr();
+            bits = 8;
+        }
+        int bit = value >> 7;
+        bits--;
+        value = (value << 1) & 0xFF;
 
-	@Override
-	public int read(int n) {
-		int read;
-		if (n <= bits) {
-			read = value >> (8 - n);
-			bits -= n;
-			value = (value << n) & 0xFF;
-		} else {
-			read = 0;
-			for (; n > 0; n--) {
-				read = (read << 1) + read1();
-			}
-		}
+        return bit;
+    }
 
-		return read;
-	}
+    @Override
+    public int read(int n) {
+        int read;
+        if (n <= bits) {
+            read = value >> (8 - n);
+            bits -= n;
+            value = (value << n) & 0xFF;
+        } else {
+            read = 0;
+            for (; n > 0; n--) {
+                read = (read << 1) + read1();
+            }
+        }
 
-	public int readByte() {
-		if (bits == 8) {
-			bits = 0;
-			return value;
-		}
-		if (bits > 0) {
-			skip(bits);
-		}
-		int read = mem.get(addr) & 0xff;
-		addr = nextAddr();
+        return read;
+    }
 
-		return read;
-	}
+    public int readByte() {
+        if (bits == 8) {
+            bits = 0;
+            return value;
+        }
+        if (bits > 0) {
+            skip(bits);
+        }
+        int read = mem.get(addr) & 0xff;
+        addr = nextAddr();
 
-	public int getBitsLeft() {
-		return (size << 3) + bits;
-	}
+        return read;
+    }
 
-	public int getBytesRead() {
-		int bytesRead = addr - initialAddr;
-		if (bits == 8) {
-			bytesRead--;
-		}
+    public int getBitsLeft() {
+        return (size << 3) + bits;
+    }
 
-		return bytesRead;
-	}
+    public int getBytesRead() {
+        int bytesRead = addr - initialAddr;
+        if (bits == 8) {
+            bytesRead--;
+        }
 
-	public int getBitsRead() {
-		return (addr - initialAddr) * 8 - bits;
-	}
+        return bytesRead;
+    }
 
-	@Override
-	public int peek(int n) {
-		int read = read(n);
-		skip(-n);
-		return read;
-	}
+    public int getBitsRead() {
+        return (addr - initialAddr) * 8 - bits;
+    }
 
-	@Override
-	public void skip(int n) {
-		bits -= n;
-		if (n >= 0) {
-			while (bits < 0) {
-				addr = nextAddr();
-				bits += 8;
-			}
-		} else {
-			while (bits > 8) {
-				addr = previousAddr();
-				bits -= 8;
-			}
-		}
+    @Override
+    public int peek(int n) {
+        int read = read(n);
+        skip(-n);
+        return read;
+    }
 
-		if (bits > 0) {
-			value = mem.get(addr - direction) & 0xff;
-			value = (value << (8 - bits)) & 0xFF;
-		}
-	}
+    @Override
+    public void skip(int n) {
+        bits -= n;
+        if (n >= 0) {
+            while (bits < 0) {
+                addr = nextAddr();
+                bits += 8;
+            }
+        } else {
+            while (bits > 8) {
+                addr = previousAddr();
+                bits -= 8;
+            }
+        }
 
-	public void seek(int n) {
-		addr = initialAddr + n;
-		size = initialSize - n;
-		bits = 0;
-	}
+        if (bits > 0) {
+            value = mem.get(addr - direction) & 0xff;
+            value = (value << (8 - bits)) & 0xFF;
+        }
+    }
 
-	public void setDirection(int direction) {
-		this.direction = direction;
-		bits = 0;
-	}
+    public void seek(int n) {
+        addr = initialAddr + n;
+        size = initialSize - n;
+        bits = 0;
+    }
 
-	public void byteAlign() {
-		if (bits > 0 && bits < 8) {
-			skip(bits);
-		}
-	}
+    public void setDirection(int direction) {
+        this.direction = direction;
+        bits = 0;
+    }
 
-	@Override
-	public int getReadAddr() {
-		if (bits == 8) {
-			return addr - direction;
-		}
-		return addr;
-	}
+    public void byteAlign() {
+        if (bits > 0 && bits < 8) {
+            skip(bits);
+        }
+    }
 
-	@Override
-	public String toString() {
-		return String.format("BitReader addr=0x%08X, bits=%d, size=0x%X, bits read %d", addr, bits, size, getBitsRead());
-	}
+    @Override
+    public int getReadAddr() {
+        if (bits == 8) {
+            return addr - direction;
+        }
+        return addr;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("BitReader addr=0x%08X, bits=%d, size=0x%X, bits read %d", addr, bits, size, getBitsRead());
+    }
 }

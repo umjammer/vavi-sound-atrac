@@ -47,6 +47,7 @@ public class Helpers {
 
     /**
      * Returns the floor of the base 2 logarithm of a specified number.
+     *
      * @param value The number whose logarithm is to be found.
      * @return The floor of the base 2 logarithm of {@code value}
      */

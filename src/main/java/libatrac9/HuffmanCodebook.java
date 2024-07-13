@@ -70,8 +70,8 @@ class HuffmanCodebook {
         return dest;
     }
 
-    public short[] codes;
-    public byte[] bits;
+    public final short[] codes;
+    public final byte[] bits;
     public byte[] lookup;
     public int valueCount;
     public int valueCountPower;

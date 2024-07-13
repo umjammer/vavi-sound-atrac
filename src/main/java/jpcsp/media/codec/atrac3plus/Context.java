@@ -27,9 +27,9 @@ public class Context {
     public Atrac3plusDsp dsp;
 
     /** global channel units */
-    public ChannelUnit[] channelUnits = new ChannelUnit[16];
+    public final ChannelUnit[] channelUnits = new ChannelUnit[16];
     /** number of channel blocks */
-    public int numChannelBlocks = 2;
+    public final int numChannelBlocks = 2;
     public int outputChannels;
 
     /** gain compensation context */
@@ -39,10 +39,10 @@ public class Context {
     public FFT ipqfDctCtx;
 
     /** quantized MDCT sprectrum */
-    public float[][] samples = new float[2][Atrac3plusDecoder.ATRAC3P_FRAME_SAMPLES];
+    public final float[][] samples = new float[2][Atrac3plusDecoder.ATRAC3P_FRAME_SAMPLES];
     /** output of the IMDCT */
-    public float[][] mdctBuf = new float[2][Atrac3plusDecoder.ATRAC3P_FRAME_SAMPLES + Atrac3plusDecoder.ATRAC3P_SUBBAND_SAMPLES];
+    public final float[][] mdctBuf = new float[2][Atrac3plusDecoder.ATRAC3P_FRAME_SAMPLES + Atrac3plusDecoder.ATRAC3P_SUBBAND_SAMPLES];
     /** output of the gain compensation */
-    public float[][] timeBuf = new float[2][Atrac3plusDecoder.ATRAC3P_FRAME_SAMPLES];
-    public float[][] outpBuf = new float[2][Atrac3plusDecoder.ATRAC3P_FRAME_SAMPLES];
+    public final float[][] timeBuf = new float[2][Atrac3plusDecoder.ATRAC3P_FRAME_SAMPLES];
+    public final float[][] outpBuf = new float[2][Atrac3plusDecoder.ATRAC3P_FRAME_SAMPLES];
 }

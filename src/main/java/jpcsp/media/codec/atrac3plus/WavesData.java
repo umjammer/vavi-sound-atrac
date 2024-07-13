@@ -22,9 +22,9 @@ package jpcsp.media.codec.atrac3plus;
 public class WavesData {
 
     /** pending envelope from the previous frame */
-    WaveEnvelope pendEnv;
+    final WaveEnvelope pendEnv;
     /** group envelope from the current frame */
-    WaveEnvelope currEnv;
+    final WaveEnvelope currEnv;
     /** number of sine waves in the group */
     int numWavs;
     /** start index into global tones table for that subband */

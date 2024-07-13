@@ -23,7 +23,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
@@ -38,7 +37,6 @@ import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
-import static vavi.sound.SoundUtil.volume;
 import static jpcsp.media.codec.atrac3.Atrac3Util.AT3_MAGIC;
 import static jpcsp.media.codec.atrac3.Atrac3Util.AT3_PLUS_MAGIC;
 import static jpcsp.media.codec.atrac3.Atrac3Util.DATA_CHUNK_MAGIC;
@@ -46,6 +44,7 @@ import static jpcsp.media.codec.atrac3.Atrac3Util.FMT_CHUNK_MAGIC;
 import static jpcsp.media.codec.atrac3.Atrac3Util.PSP_CODEC_AT3;
 import static jpcsp.media.codec.atrac3.Atrac3Util.PSP_CODEC_AT3PLUS;
 import static jpcsp.media.codec.atrac3.Atrac3Util.RIFF_MAGIC;
+import static vavi.sound.SoundUtil.volume;
 
 
 @PropsEntity(url = "file:local.properties")
@@ -64,8 +63,6 @@ public class CodecTest {
             PropsEntity.Util.bind(this);
         }
     }
-
-    private static final Logger log = Logger.getLogger(CodecTest.class.getName());
 
     static long time;
     static double volume;
@@ -94,7 +91,7 @@ public class CodecTest {
                 int chunkMagic = ByteUtil.readLeInt(buffer,inputAddr + scanOffset);
                 int chunkLength = ByteUtil.readLeInt(buffer,inputAddr + scanOffset + 4);
                 scanOffset += 8;
-log.finer("@CHUNK: " + Atrac3Util.getStringFromInt32(chunkMagic) + ", offset: " + scanOffset + ", length: " + chunkLength);
+Debug.println("@CHUNK: " + Atrac3Util.getStringFromInt32(chunkMagic) + ", offset: " + scanOffset + ", length: " + chunkLength);
                 switch (chunkMagic) {
                 case FMT_CHUNK_MAGIC:
                     codecType = switch (ByteUtil.readLeShort(buffer, inputAddr + scanOffset) & 0xffff) {
@@ -151,7 +148,7 @@ Debug.println("inputAddr: " + inputAddr);
             out.clear();
             int result = codec.decode(in, inputAddr, length, out, 0);
             if (result < 0) {
-                log.severe(String.format("Frame #%d, result 0x%08X", frameNbr, result));
+Debug.println(Level.SEVERE, String.format("Frame #%d, result 0x%08X", frameNbr, result));
                 break;
             }
             if (result == 0) {
@@ -163,7 +160,7 @@ Debug.println("inputAddr: " + inputAddr);
                 if (bytesPerFrame == 0) {
                     consumedBytes = result;
                 } else {
-                    log.warning(String.format("Frame #%d, result 0x%X, expected 0x%X", frameNbr, result, bytesPerFrame));
+Debug.println(Level.WARNING, String.format("Frame #%d, result 0x%X, expected 0x%X", frameNbr, result, bytesPerFrame));
                 }
             }
 

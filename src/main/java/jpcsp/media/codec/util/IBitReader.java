@@ -19,10 +19,16 @@ package jpcsp.media.codec.util;
 
 
 public interface IBitReader {
-	int read1();
-	boolean readBool();
-	int read(int n);
-	int peek(int n);
-	void skip(int n);
-	int getReadAddr();
+
+    int read1();
+
+    boolean readBool();
+
+    int read(int n);
+
+    int peek(int n);
+
+    void skip(int n);
+
+    int getReadAddr();
 }

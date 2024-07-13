@@ -29,15 +29,15 @@ import libatrac9.util.Mdct;
 
 class Channel {
 
-    private Atrac9Config config;
-    private int channelIndex;
+    private final Atrac9Config config;
+    private final int channelIndex;
 
     public boolean isPrimary() {
         return block.getPrimaryChannelIndex() == channelIndex;
     }
 
-    private Block block;
-    private Mdct mdct;
+    private final Block block;
+    private final Mdct mdct;
 
     public Atrac9Config getConfig() {
         return config;
