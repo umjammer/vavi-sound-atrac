@@ -36,14 +36,14 @@ public class Utils {
     }
 
     private static Object initializeJaggedArray(Class<?> type, int index, int... lengths) {
-        Debug.println(Level.FINER, "array: " + type + ", length: " + lengths[index]);
+        logger.log(Level.TRACE, "array: " + type + ", length: " + lengths[index]);
         Object array = Array.newInstance(type, lengths[index]);
 
         if (!type.isArray()) return array;
         Class<?> elementType = type.getComponentType();
 
         for (int i = 0; i < lengths[index]; i++) {
-            Debug.println(Level.FINER, " sub array: index[" + i + "]: length: " + lengths[index + 1]);
+            logger.log(Level.TRACE, " sub array: index[" + i + "]: length: " + lengths[index + 1]);
             Array.set(array, i, initializeJaggedArray(elementType, index + 1, lengths));
         }
 

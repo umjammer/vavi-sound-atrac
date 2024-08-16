@@ -90,8 +90,8 @@ public class Mdct {
                 }
                 _tableBits = maxBits;
             }
-//Debug.println("sinTables: " + sinTables.size() + ", " + sinTables);
-//Debug.println("cosTables: " + cosTables.size() + ", " + cosTables);
+//logger.log(Level.TRACE, "sinTables: " + sinTables.size() + ", " + sinTables);
+//logger.log(Level.TRACE, "cosTables: " + cosTables.size() + ", " + cosTables);
         }
     }
 
@@ -129,7 +129,7 @@ public class Mdct {
         double[] sinTable = sinTables.get(mdctBits);
         double[] cosTable = cosTables.get(mdctBits);
         double[] dctTemp = scratchDct;
-//Debug.println("mdctBits: " + mdctBits);
+//logger.log(Level.TRACE, "mdctBits: " + mdctBits);
 
         int size = mdctSize;
         int lastIndex = size - 1;

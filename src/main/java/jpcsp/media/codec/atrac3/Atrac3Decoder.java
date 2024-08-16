@@ -126,14 +126,12 @@ public class Atrac3Decoder implements ICodec {
 
     private void imlt(float[] input, int inputOffset, float[] output, int outputOffset, boolean oddBand) {
         if (oddBand) {
-	        /*
-	          Reverse the odd bands before IMDCT, this is an effect of the QMF
-	          transform or it gives better compression to do it this way.
-	          FIXME: It should be possible to handle this in imdct_calc
-	          for that to happen a modification of the prerotation step of
-	          all SIMD code and C code is needed.
-	          Or fix the functions before so they generate a pre reversed spectrum.
-	         */
+            // Reverse the odd bands before IMDCT, this is an effect of the QMF
+            // transform or it gives better compression to do it this way.
+            // FIXME: It should be possible to handle this in imdct_calc
+            // for that to happen a modification of the prerotation step of
+            // all SIMD code and C code is needed.
+            // Or fix the functions before so they generate a pre reversed spectrum.
             for (int i = 0; i < 128; i++) {
                 float tmp = input[inputOffset + i];
                 input[inputOffset + i] = input[inputOffset + 255 - i];

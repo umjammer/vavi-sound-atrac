@@ -37,7 +37,7 @@ class HuffmanCodebook {
         valueCount = 1 << valueCountPower;
         this.valueCountPower = valueCountPower;
         valueBits = Helpers.log2(codes.length) >>> valueCountPower;
-//Debug.println("valueBits: " + valueBits);
+//logger.log(Level.TRACE, "valueBits: " + valueBits);
         valueMax = 1 << valueBits;
 
         int max = 0;

@@ -9,9 +9,10 @@ package vavi.sound.sampled.atrac;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.logging.Level;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 
@@ -21,7 +22,10 @@ import jpcsp.media.codec.atrac3plus.Atrac3plusDecoder;
 import vavi.io.OutputEngine;
 import vavi.io.OutputEngineInputStream;
 import vavi.util.ByteUtil;
-import vavi.util.Debug;
+
+import static java.lang.System.Logger.Level.TRACE;
+import static java.lang.System.Logger.Level.WARNING;
+import static java.lang.System.getLogger;
 
 
 /**
@@ -31,6 +35,8 @@ import vavi.util.Debug;
  * @version 0.00 231008 nsano initial version <br>
  */
 class Atrac3ToPcmAudioInputStream extends AudioInputStream {
+
+    private static final Logger logger = getLogger(Atrac3ToPcmAudioInputStream.class.getName());
 
     /**
      * Constructor.
@@ -43,7 +49,7 @@ class Atrac3ToPcmAudioInputStream extends AudioInputStream {
         super(new OutputEngineInputStream(new Atrac3OutputEngine(in)), format, length);
     }
 
-    /**  */
+    /** */
     private static class Atrac3OutputEngine implements OutputEngine {
 
         public static final int PSP_CODEC_AT3PLUS = 0x00001000;
@@ -53,26 +59,26 @@ class Atrac3ToPcmAudioInputStream extends AudioInputStream {
         public static final int FMT_CHUNK_MAGIC = 0x20746D66; // "FMT "
         public static final int DATA_CHUNK_MAGIC = 0x61746164; // "DATA"
 
-        /**  */
+        /** */
         private final ByteBuffer in;
 
-        /**  */
+        /** */
         private DataOutputStream out;
 
-        /**  */
+        /** */
         private final ICodec decoder;
 
-        /**  */
+        /** */
         private int inputAddr;
 
-        /**  */
+        /** */
         private int length;
-        /**  */
+        /** */
         private int channels = 2;
-        /**  */
+        /** */
         private int bytesPerFrame = 0;
 
-        /**  */
+        /** */
         public Atrac3OutputEngine(AudioInputStream in) throws IOException {
             byte[] inBuf = in.readAllBytes();
             this.in = ByteBuffer.wrap(inBuf).order(ByteOrder.LITTLE_ENDIAN);
@@ -89,7 +95,7 @@ class Atrac3ToPcmAudioInputStream extends AudioInputStream {
                     scanOffset += 8;
                     byte[] m = new byte[4];
                     ByteUtil.writeLeInt(chunkMagic, m);
-                    Debug.printf(Level.FINER, "@CHUNK: %c%c%c%c, offset: %d, length: %d", m[0], m[1], m[2], m[3], scanOffset, chunkLength);
+logger.log(TRACE, "@CHUNK: %c%c%c%c, offset: %d, length: %d".formatted(m[0], m[1], m[2], m[3], scanOffset, chunkLength));
                     switch (chunkMagic) {
                         case FMT_CHUNK_MAGIC:
                             codecType = switch (ByteUtil.readLeShort(inBuf, inputAddr + scanOffset) & 0xffff) {
@@ -98,9 +104,9 @@ class Atrac3ToPcmAudioInputStream extends AudioInputStream {
                                 default -> codecType;
                             };
                             channels = ByteUtil.readLeShort(inBuf, inputAddr + scanOffset + 2);
-                            Debug.println(Level.FINER, "channels: " + channels);
+logger.log(TRACE, "channels: " + channels);
                             bytesPerFrame = ByteUtil.readLeShort(inBuf, inputAddr + scanOffset + 12);
-                            Debug.println(Level.FINER, "bytesPerFrame: " + bytesPerFrame);
+logger.log(TRACE, "bytesPerFrame: " + bytesPerFrame);
                             int extraDataSize = ByteUtil.readLeShort(inBuf, inputAddr + scanOffset + 16);
                             if (extraDataSize == 14) {
                                 codingMode = ByteUtil.readLeShort(inBuf, inputAddr + scanOffset + 18 + 6);
@@ -121,11 +127,11 @@ class Atrac3ToPcmAudioInputStream extends AudioInputStream {
                 case PSP_CODEC_AT3PLUS -> new Atrac3plusDecoder();
                 default -> throw new IllegalArgumentException("not atrac3");
             };
-            Debug.println(Level.FINER, "codec: " + this.decoder);
+logger.log(TRACE, "codec: " + this.decoder);
             this.decoder.init(bytesPerFrame, channels, channels, codingMode);
 
             this.inputAddr += dataOffset;
-            Debug.println(Level.FINER, "inputAddr: " + inputAddr);
+logger.log(TRACE, "inputAddr: " + inputAddr);
             this.length -= dataOffset;
         }
 
@@ -138,7 +144,7 @@ class Atrac3ToPcmAudioInputStream extends AudioInputStream {
             }
         }
 
-        /**  */
+        /** */
         private int frameNbr;
 
         @Override
@@ -149,11 +155,11 @@ class Atrac3ToPcmAudioInputStream extends AudioInputStream {
                 ByteBuffer outBuf = ByteBuffer.allocate(decoder.getNumberOfSamples() * 2 * channels).order(ByteOrder.LITTLE_ENDIAN);
                 int result = decoder.decode(in, inputAddr, length, outBuf, 0);
                 if (result < 0) {
-                    Debug.printf(Level.WARNING, "Frame #%d, result 0x%X", frameNbr, result);
+logger.log(WARNING, "Frame #%d, result 0x%X".formatted(frameNbr, result));
                     throw new IllegalStateException(String.format("Frame #%d, result 0x%08X", frameNbr, result));
                 }
                 if (result == 0) {
-                    Debug.printf(Level.FINER, "Frame #%d, EOF", frameNbr);
+logger.log(TRACE, "Frame #%d, EOF".formatted(frameNbr));
                     out.close();
                     return;
                 }
@@ -162,7 +168,7 @@ class Atrac3ToPcmAudioInputStream extends AudioInputStream {
                     if (bytesPerFrame == 0) {
                         consumedBytes = result;
                     } else {
-                        Debug.printf(Level.WARNING, "Frame #%d, result 0x%X, expected 0x%X", frameNbr, result, bytesPerFrame);
+logger.log(WARNING, "Frame #%d, result 0x%X, expected 0x%X".formatted(frameNbr, result, bytesPerFrame));
                     }
                 }
 

@@ -58,19 +58,19 @@ class Atrac9ToPcmAudioInputStream extends AudioInputStream {
     /** decoding input stream */
     private static class Atrac9OutputEngine implements OutputEngine {
 
-        /**  */
+        /** */
         At9Structure structure;
 
-        /**  */
+        /** */
         Atrac9Decoder decoder;
 
-        /**  */
+        /** */
         DataOutputStream out;
 
-        /**  */
+        /** */
         final LittleEndianDataInputStream in;
 
-        /**  */
+        /** */
         Atrac9OutputEngine(AudioInputStream in) throws IOException {
             this.in = new LittleEndianDataInputStream(in);
 
@@ -92,7 +92,7 @@ class Atrac9ToPcmAudioInputStream extends AudioInputStream {
             try {
                 smpl = wave.findChildOf(smpl.class);
             } catch (IllegalArgumentException e) {
-                Debug.println(Level.FINER, "no smpl chunk");
+logger.log(Level.TRACE, "no smpl chunk");
             }
 
             structure.config = new Atrac9Config(ext.configData);
@@ -126,7 +126,7 @@ class Atrac9ToPcmAudioInputStream extends AudioInputStream {
             blocksToCopy = Math.min(inBlockCount, outBlockCount);
 
             pcmBuffer = createJaggedArray(short[][].class, config.getChannelCount(), config.getSuperframeSamples());
-            Debug.println(Level.FINER, "array: pcmBuffer, " + pcmBuffer.length + " x " + pcmBuffer[0].length);
+logger.log(Level.TRACE, "array: pcmBuffer, " + pcmBuffer.length + " x " + pcmBuffer[0].length);
         }
 
         @Override
