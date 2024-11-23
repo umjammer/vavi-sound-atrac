@@ -20,7 +20,7 @@ import javax.sound.sampled.AudioFormat;
 public class AtracEncoding extends AudioFormat.Encoding {
 
     public static final int AT3_MAGIC = 0x0270; // "AT3"
-    public static final int WAVE_FORMAT_EXTENSIBLE = 0xFFFE; // "AT3PLUS", "AT9"
+    public static final int WAVE_FORMAT_EXTENSIBLE = 0xfffe; // "AT3PLUS", "AT9"
 
     /** Specifies any ALAC encoded data. */
     public static final AtracEncoding ATRAC = new AtracEncoding("ATRAC", 0); // TODO
@@ -37,11 +37,11 @@ public class AtracEncoding extends AudioFormat.Encoding {
      *
      * @param name Name of the ALAC encoding.
      */
-    public AtracEncoding(String name, int magic) {
+    private AtracEncoding(String name, int magic) {
         this(name, magic, null);
     }
 
-    public AtracEncoding(String name, int magic, UUID guid) {
+    private AtracEncoding(String name, int magic, UUID guid) {
         super(name);
         this.magic = magic;
         this.guid = guid;
