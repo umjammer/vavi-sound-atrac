@@ -29,7 +29,7 @@ public class AtracFileFormatType extends AudioFileFormat.Type {
      * @param name      the name of the ATRAC File Format.
      * @param extension the file extension for this ATRAC File Format.
      */
-    public AtracFileFormatType(String name, String extension) {
+    private AtracFileFormatType(String name, String extension) {
         super(name, extension);
     }
 }

@@ -8,7 +8,7 @@
 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/MiniDisc-Logo.svg/248px-MiniDisc-Logo.svg.png" width="120" /><br/>
 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Atrac.svg/160px-Atrac.svg.png" width="120" /> &nbsp;&nbsp;&nbsp;<sub>© Sony Corporation</sub>
 
-Pure Java ATRAC3plus decoder (Java Sound SPI) powered by [Jpcsp](https://github.com/jpcsp/jpcsp) (atrac3+) and [libatrac9](https://github.com/Thealexbarney/LibAtrac9/tree/master/CSharp/LibAtrac9) (atrac9)
+Pure Java ATRAC series decoder (Java Sound SPI) powered by [Jpcsp](https://github.com/jpcsp/jpcsp) (atrac3+) and [libatrac9](https://github.com/Thealexbarney/LibAtrac9/tree/master/CSharp/LibAtrac9) (atrac9)
 
 ## install
 
@@ -41,4 +41,4 @@ Pure Java ATRAC3plus decoder (Java Sound SPI) powered by [Jpcsp](https://github.
  * file extension is `aa3`?
  * ~~atrac9~~
  * ~~project name vavi-sound-atrac3plus -> vavi-sound-atrac~~
- * ~~package name vavi.sound.sampled.atrac -> vavi.sound.sampled.atrac~~ 
+ * ~~package name vavi.sound.sampled.atrac3 -> vavi.sound.sampled.atrac~~ 

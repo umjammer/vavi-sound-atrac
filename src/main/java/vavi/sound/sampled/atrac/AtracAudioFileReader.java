@@ -10,11 +10,12 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioFormat.Encoding;
@@ -26,11 +27,11 @@ import javax.sound.sampled.spi.AudioFileReader;
 import libatrac9.decoder.Atrac9.WaveFormatExtensible;
 import libatrac9.decoder.Atrac9.fact;
 import libatrac9.decoder.Atrac9.smpl;
-import vavi.util.Debug;
 import vavi.util.win32.Chunk;
 import vavi.util.win32.WAVE;
 import vavi.util.win32.WAVE.fmt;
 
+import static java.lang.System.getLogger;
 import static vavi.sound.sampled.atrac.AtracEncoding.ATRAC3;
 import static vavi.sound.sampled.atrac.AtracEncoding.ATRAC3PLUS;
 import static vavi.sound.sampled.atrac.AtracEncoding.ATRAC_ADVANCED_LOSSLESS;
@@ -45,6 +46,8 @@ import static vavi.sound.sampled.atrac.AtracEncoding.ATRAC_ADVANCED_LOSSLESS;
  * @version 0.00 231008 nsano initial version <br>
  */
 public class AtracAudioFileReader extends AudioFileReader {
+
+    private static final Logger logger = getLogger(AtracAudioFileReader.class.getName());
 
     @Override
     public AudioFileFormat getAudioFileFormat(File file) throws UnsupportedAudioFileException, IOException {
@@ -77,7 +80,7 @@ public class AtracAudioFileReader extends AudioFileReader {
      * @throws IOException                   if an I/O exception occurs.
      */
     protected AudioFileFormat getAudioFileFormat(InputStream bitStream, int mediaLength) throws UnsupportedAudioFileException, IOException {
-        Debug.println(Level.FINE, "enter available: " + bitStream.available());
+logger.log(Level.TRACE, "enter available: " + bitStream.available());
         if (!bitStream.markSupported()) {
             throw new IllegalArgumentException("must be mark supported");
         }
@@ -96,7 +99,7 @@ public class AtracAudioFileReader extends AudioFileReader {
             WAVE wave = Chunk.readFrom(bitStream, WAVE.class, context);
             fmt fmt = wave.findChildOf(WAVE.fmt.class);
             int formatCode = fmt.getFormatId();
-            Debug.println(Level.FINER, "formatCode: " + formatCode);
+logger.log(Level.TRACE, "formatCode: " + formatCode);
             sampleRate = fmt.getSamplingRate();
             channels = fmt.getNumberChannels();
             encoding = switch (formatCode) {
@@ -104,7 +107,7 @@ public class AtracAudioFileReader extends AudioFileReader {
                 case AtracEncoding.WAVE_FORMAT_EXTENSIBLE -> {
                     if (fmt.getExtended() == null) throw new IllegalArgumentException("no fmt.extension");
                     var wavext = new WaveFormatExtensible(fmt.getExtended());
-                    Debug.println(Level.FINER, "subFormat: " + wavext.subFormat);
+logger.log(Level.TRACE, "subFormat: " + wavext.subFormat);
                     if (wavext.subFormat.equals(ATRAC_ADVANCED_LOSSLESS.guid)) {
                         yield ATRAC_ADVANCED_LOSSLESS;
                     }
@@ -126,19 +129,17 @@ public class AtracAudioFileReader extends AudioFileReader {
         } catch (IOException e) {
             throw e;
         } catch (Exception e) {
-            Debug.println(Level.FINE, e);
-            Debug.printStackTrace(Level.FINER, e);
+logger.log(Level.TRACE, e);
+logger.log(Level.DEBUG, e.getMessage(), e);
             throw (UnsupportedAudioFileException) new UnsupportedAudioFileException(e.getMessage()).initCause(e);
         } finally {
             try {
                 bitStream.reset();
             } catch (IOException e) {
-                if (Debug.isLoggable(Level.FINEST))
-                    Debug.printStackTrace(e);
-                else
-                    Debug.println(Level.FINE, e);
+logger.log(Level.DEBUG, e);
+logger.log(Level.TRACE, e.getMessage(), e);
             }
-            Debug.println(Level.FINE, "finally available: " + bitStream.available());
+logger.log(Level.TRACE, "finally available: " + bitStream.available());
         }
         return new AudioFileFormat(AtracFileFormatType.ATRAC, format, AudioSystem.NOT_SPECIFIED);
     }

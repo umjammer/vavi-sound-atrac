@@ -9,11 +9,12 @@ package vavi.sound.sampled.atrac;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.logging.Level;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 
@@ -26,11 +27,11 @@ import libatrac9.decoder.Atrac9.smpl;
 import vavi.io.LittleEndianDataInputStream;
 import vavi.io.OutputEngine;
 import vavi.io.OutputEngineInputStream;
-import vavi.util.Debug;
 import vavi.util.win32.Chunk;
 import vavi.util.win32.WAVE;
 import vavi.util.win32.WAVE.fmt;
 
+import static java.lang.System.getLogger;
 import static libatrac9.decoder.Utils.createJaggedArray;
 import static libatrac9.decoder.Utils.divideByRoundUp;
 import static libatrac9.decoder.Utils.shortToInterleavedByte;
@@ -43,6 +44,8 @@ import static libatrac9.decoder.Utils.shortToInterleavedByte;
  * @version 0.00 240330 nsano initial version <br>
  */
 class Atrac9ToPcmAudioInputStream extends AudioInputStream {
+
+    private static final Logger logger = getLogger(Atrac9ToPcmAudioInputStream.class.getName());
 
     /**
      * Constructor.
@@ -58,19 +61,19 @@ class Atrac9ToPcmAudioInputStream extends AudioInputStream {
     /** decoding input stream */
     private static class Atrac9OutputEngine implements OutputEngine {
 
-        /**  */
+        /** */
         At9Structure structure;
 
-        /**  */
+        /** */
         Atrac9Decoder decoder;
 
-        /**  */
+        /** */
         DataOutputStream out;
 
-        /**  */
+        /** */
         final LittleEndianDataInputStream in;
 
-        /**  */
+        /** */
         Atrac9OutputEngine(AudioInputStream in) throws IOException {
             this.in = new LittleEndianDataInputStream(in);
 
@@ -92,7 +95,7 @@ class Atrac9ToPcmAudioInputStream extends AudioInputStream {
             try {
                 smpl = wave.findChildOf(smpl.class);
             } catch (IllegalArgumentException e) {
-                Debug.println(Level.FINER, "no smpl chunk");
+logger.log(Level.TRACE, "no smpl chunk");
             }
 
             structure.config = new Atrac9Config(ext.configData);
@@ -126,7 +129,7 @@ class Atrac9ToPcmAudioInputStream extends AudioInputStream {
             blocksToCopy = Math.min(inBlockCount, outBlockCount);
 
             pcmBuffer = createJaggedArray(short[][].class, config.getChannelCount(), config.getSuperframeSamples());
-            Debug.println(Level.FINER, "array: pcmBuffer, " + pcmBuffer.length + " x " + pcmBuffer[0].length);
+logger.log(Level.TRACE, "array: pcmBuffer, " + pcmBuffer.length + " x " + pcmBuffer[0].length);
         }
 
         @Override

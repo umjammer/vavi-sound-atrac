@@ -59,7 +59,7 @@ public class Atrac3plusDsp {
      * To get the number of spectral lines in each quant unit do the following:
      * num_specs = qu_to_spec_pos[i+1] - qu_to_spec_pos[i]
      */
-    static final public int[] ff_atrac3p_qu_to_spec_pos = new int[] {
+    public static final int[] ff_atrac3p_qu_to_spec_pos = new int[] {
             0, 16, 32, 48, 64, 80, 96, 112,
             128, 160, 192, 224, 256, 288, 320, 352,
             384, 448, 512, 576, 640, 704, 768, 896,
@@ -71,7 +71,7 @@ public class Atrac3plusDsp {
      * Scalefactors table.
      * Approx. Equ: pow(2.0, (i - 16.0 + 0.501783948) / 3.0)
      */
-    static final public float[] ff_atrac3p_sf_tab = new float[] {
+    public static final float[] ff_atrac3p_sf_tab = new float[] {
             0.027852058f, 0.0350914f, 0.044212341f, 0.055704117f, 0.0701828f,
             0.088424683f, 0.11140823f, 0.1403656f, 0.17684937f, 0.22281647f, 0.2807312f, 0.35369873f,
             0.44563293f, 0.5614624f, 0.70739746f, 0.89126587f, 1.1229248f, 1.4147949f, 1.7825317f,
@@ -88,7 +88,7 @@ public class Atrac3plusDsp {
      * Mantissa table.
      * pow(10, x * log10(2) + 0.05) / 2 / ([1,2,3,5,7,15,31] + 0.5)
      */
-    static final public float[] ff_atrac3p_mant_tab = new float[] {
+    public static final float[] ff_atrac3p_mant_tab = new float[] {
             0.0f,
             0.74801636f,
             0.44882202f,
@@ -99,12 +99,12 @@ public class Atrac3plusDsp {
             0.035619736f
     };
 
-    static final private int[] subband_to_powgrp = new int[] {
+    private static final int[] subband_to_powgrp = new int[] {
             0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4
     };
 
     /** noise table for power compensation */
-    static final private float[] noise_tab = new float[] {
+    private static final float[] noise_tab = new float[] {
             -0.01358032f, -0.05593872f, 0.01696777f, -0.14871216f, -0.26412964f, -0.09893799f, 0.25723267f,
             0.02008057f, -0.72235107f, -0.44351196f, -0.22985840f, 0.16833496f, 0.46902466f, 0.05917358f,
             -0.15179443f, 0.41299438f, -0.01287842f, 0.13360596f, 0.43557739f, -0.09530640f, -0.58422852f,
@@ -258,13 +258,13 @@ public class Atrac3plusDsp {
      * Noise level table for power compensation.
      * Equ: pow(2.0f, (double)(6 - i) / 3.0f) where i = 0...15
      */
-    static final private float[] pwc_levs = new float[] {
+    private static final float[] pwc_levs = new float[] {
             3.96875f, 3.15625f, 2.5f, 2.0f, 1.59375f, 1.25f, 1.0f, 0.78125f,
             0.625f, 0.5f, 0.40625f, 0.3125f, 0.25f, 0.1875f, 0.15625f, 0.0f
     };
 
     /** Map subband number to quant unit number. */
-    static final private int[] subband_to_qu = new int[] {
+    private static final int[] subband_to_qu = new int[] {
             0, 8, 12, 16, 18, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32
     };
 
