@@ -17,7 +17,6 @@
 
 package jpcsp.media.codec;
 
-
 import java.nio.ByteBuffer;
 
 

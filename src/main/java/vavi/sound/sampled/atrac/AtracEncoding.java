@@ -6,7 +6,6 @@
 
 package vavi.sound.sampled.atrac;
 
-
 import java.util.UUID;
 import javax.sound.sampled.AudioFormat;
 

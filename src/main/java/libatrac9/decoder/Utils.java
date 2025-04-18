@@ -4,11 +4,11 @@
 
 package libatrac9.decoder;
 
-
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.lang.reflect.Array;
-import java.util.logging.Level;
 
-import vavi.util.Debug;
+import static java.lang.System.getLogger;
 
 
 /**
@@ -18,6 +18,8 @@ import vavi.util.Debug;
  * @version 0.00 2024-03-29 nsano initial version <br>
  */
 public class Utils {
+
+    private static final Logger logger = getLogger(Utils.class.getName());
 
     private Utils() {
     }
