@@ -5,8 +5,7 @@
 
 # vavi-sound-atrac
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/MiniDisc-Logo.svg/248px-MiniDisc-Logo.svg.png" width="120" /><br/>
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Atrac.svg/160px-Atrac.svg.png" width="120" /> &nbsp;&nbsp;&nbsp;<sub>© Sony Corporation</sub>
+<img alt="logo" src="src/test/resources/duke_md.png" width="160" />
 
 Pure Java ATRAC series decoder (Java Sound SPI) powered by [Jpcsp](https://github.com/jpcsp/jpcsp) (atrac3+) and [libatrac9](https://github.com/Thealexbarney/LibAtrac9/tree/master/CSharp/LibAtrac9) (atrac9)
 
@@ -17,10 +16,19 @@ Pure Java ATRAC series decoder (Java Sound SPI) powered by [Jpcsp](https://githu
 ## Usage
 
 ```java
-    AudioInputStream ais = AudioSystem.getAudioInputStream(Paths.get("foo.at3").toFile());
-    Clip clip = AudioSystem.getClip();
-    clip.open(AudioSystem.getAudioInputStream(new AudioFormat(44100, 16, 2, true, false), ais));
-    clip.loop(Clip.LOOP_CONTINUOUSLY);
+AudioInputStream atracAis = AudioSystem.getAudioInputStream(new BufferedInputStream(Files.newInputStream(atrac)));
+AudioFormat inFormat = sourceAis.getFormat();
+AudioFormat outFormat = new AudioFormat(44100, 16, 2, true, false);
+AudioInputStream pcmAis = AudioSystem.getAudioInputStream(outFormat, atracAis);
+SourceDataLine line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, pcmAis.getFormat()));
+line.open(pcmAis.getFormat());
+line.start();
+byte[] buffer = new byte[line.getBufferSize()];
+int bytesRead;
+while ((bytesRead = pcmAis.read(buffer)) != -1) {
+  line.write(buffer, 0, bytesRead);
+}
+line.drain();
 ```
 
 ## References
@@ -42,3 +50,7 @@ Pure Java ATRAC series decoder (Java Sound SPI) powered by [Jpcsp](https://githu
  * ~~atrac9~~
  * ~~project name vavi-sound-atrac3plus -> vavi-sound-atrac~~
  * ~~package name vavi.sound.sampled.atrac3 -> vavi.sound.sampled.atrac~~ 
+
+---
+
+<sub>image designed by @umjammer, drawn by nano banana</sub>
