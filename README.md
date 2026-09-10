@@ -31,6 +31,13 @@ while ((bytesRead = pcmAis.read(buffer)) != -1) {
 line.drain();
 ```
 
+### jvm args
+
+```
+--add-opens java.base/java.io=ALL-UNNAMED
+--add-opens java.base/sun.nio.ch=ALL-UNNAMED
+```
+
 ## References
 
  * https://github.com/korlibs-archive/korau-atrac3plus ... sample doesn't work, ~~same result as mine~~
